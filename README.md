@@ -20,27 +20,37 @@ TinyGlobo 1 consists of:
     - HMC5883L
 
 ### GPS
-GP0 UART TX     -> GPS RX
-GP1 UART RX     -> GPS TX
-3V3             -> GPS VCC
+
+| RP2040 Pin | GPS Pin |
+|------------|---------|
+| GP0 UART TX | RX |
+| GP1 UART RX | TX |
+| 3V3 | VCC |
 
 ### Sensors
-GP4 I2C0 SDA    -> HW-290 SDA
-GP5 I2C0 SCL    -> HW-290 SCL
-3V3             -> HW-290 3V3
-GND             -> HW-290 GND
+
+| RP2040 Pin | HW-290 Pin |
+|------------|---------|
+| GP4 I2C0 SDA | SDA |
+| GP5 I2C0 SCL | SCL |
+| 3V3 | 3V3 |
+| GND | GND |
 
 ### LAMBDA62 (SX1262)
-GP6             -> SX1262 DIO1
-GP7             -> SX1262 BUSY (DIO0)
-GP8             -> SX1262 TX EN
-GP9             -> SX1262 RX EN
-GP10 SPI0 CLK   -> SX1262 CLK
-GP11 SPI0 CDO   -> SX1262
-GP12 SPI0 CDI   -> SX1262
-GP13 SPI0 CS    -> SX1262 NSS
-3V3             -> SX1262 3V3
-GND             -> SX1262 GND
+
+| RP2040 Pin | LAMBDA62 Pin |
+|------------|---------|
+| GP6 | DIO1 |
+| GP7 | DIO0 |
+| GP8 | TX_SWITCH |
+| GP9 | RX_SWITCH |
+| GP10 | SCLK |
+| GP11 SPI0 CDO | SDI |
+| GP12 SPI0 CDI | SDO |
+| GP13 SPI0 CS | nSEL |
+| 3V3 | 3V3 |
+| GND | GND |
+
 
 
 ## Samples
