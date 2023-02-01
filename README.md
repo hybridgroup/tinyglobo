@@ -4,8 +4,11 @@ A small balloon floats into the great big world, towing a RP2040 programmed with
 
 ## Flashing
 
-tinygo flash -target pico .
+```
+make flash
+```
 
+Put your keys into the `/keys` directory as explained there.
 
 ## Wiring
 
@@ -59,3 +62,24 @@ TinyGlobo 1 consists of:
 
 tinygo flash -target pico ./samples/gps
 
+## Inflation of the balloons
+
+NOTE: keep at least 1 clip attached to each balloon at all times!!!!
+
+You will need 2 - 36 inch transparent balloons.
+
+Use 2 big clips to hold them shut while filling to needed buoyancy.
+
+To calculate:
+
+Full payload of the TinyGlobo / 2 + 5g == Target lift per balloon
+
+2 times clip weight minus target lift per balloon == the weight to be shown on scale when filling balloons.
+
+Use 2 small tie wraps to seal each balloon with a twist.
+
+Connect both balloons together using 2 more small tie wraps.
+
+Connect balloons to payload using fishing line. Make sure the knots are snug and correct.
+
+FLY!!

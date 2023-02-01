@@ -1,22 +1,16 @@
 package main
 
 import (
-	"machine"
-
 	"time"
 
+	"tinygo.org/x/drivers/lora"
 	"tinygo.org/x/drivers/lora/lorawan"
-)
-
-var (
-	spi                        = machine.SPI1
-	nssPin, busyPin, dio1Pin   = machine.GP13, machine.GP7, machine.GP6
-	rxPin, txLowPin, txHighPin = machine.GP9, machine.GP8, machine.GP8
+	"tinygo.org/x/drivers/lora/lorawan/region"
 )
 
 func main() {
 	time.Sleep(5 * time.Second)
-	println("*** Sparkie 1 starting... ***")
+	println("*** TinyGlobo 1 starting... ***")
 
 	// setup LoRa radio
 	var err error
@@ -28,8 +22,13 @@ func main() {
 	// Connect LoRaWAN to use the LoRa Radio device.
 	lorawan.UseRadio(radio)
 
+	// use EU868 DR2 spreading factor for high-altitude
+	settings := region.EU868()
+	settings.UplinkChannel().SpreadingFactor = lora.SpreadingFactor10
+	lorawan.UseRegionSettings(settings)
+
 	// Try to connect to the LoRaWAN network
-	if err := loraConnect(); err != nil {
+	if err := lorawanJoin(); err != nil {
 		failMessage(err)
 	}
 
@@ -39,8 +38,8 @@ func main() {
 	startSensors()
 
 	for {
-		println("Sleeping for", LORAWAN_UPLINK_DELAY_SEC, "seconds")
-		time.Sleep(time.Second * LORAWAN_UPLINK_DELAY_SEC)
+		println("Sleeping for", uplinkDelaySeconds, "seconds")
+		time.Sleep(time.Second * uplinkDelaySeconds)
 
 		readBattery()
 		readSensors()

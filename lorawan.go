@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"errors"
 	"time"
 
 	"tinygo.org/x/drivers/lora"
@@ -12,9 +11,9 @@ import (
 )
 
 const (
-	LORAWAN_JOIN_TIMEOUT_SEC    = 180
-	LORAWAN_RECONNECT_DELAY_SEC = 15
-	LORAWAN_UPLINK_DELAY_SEC    = 30
+	joinTimeoutSeconds    = 180
+	reconnectDelaySeconds = 15
+	uplinkDelaySeconds    = 30
 )
 
 var (
@@ -22,27 +21,30 @@ var (
 
 	session *lorawan.Session = &lorawan.Session{}
 	otaa    *lorawan.Otaa = &lorawan.Otaa{}
+
 	encoder cayennelpp.Encoder = cayennelpp.NewEncoder()
 )
 
-func loraConnect() error {
+func lorawanJoin() error {
 	// Configure AppEUI, DevEUI, APPKey
-	setLorawanKeys()
+	if err := setLorawanKeys(); err != nil {
+		return err
+	}
 
 	start := time.Now()
-	for time.Since(start) < LORAWAN_JOIN_TIMEOUT_SEC*time.Second {
-		println("Trying to join network")
+	for time.Since(start) < joinTimeoutSeconds*time.Second {
+		println("Trying to join LoRaWAN network")
 		err := lorawan.Join(otaa, session)
 		if err == nil {
-			println("Connected to network!")
+			println("Connected to LoRaWAN network!")
 
 			return nil
 		}
-		println("Join error:", err, "retrying in", LORAWAN_RECONNECT_DELAY_SEC, "sec")
-		time.Sleep(time.Second * LORAWAN_RECONNECT_DELAY_SEC)
+		println("Join error:", err, "retrying in", reconnectDelaySeconds, "sec")
+		time.Sleep(time.Second * reconnectDelaySeconds)
 	}
 
-	err := errors.New("Unable to join Lorawan network")
+	err := errUnableToJoin
 	println(err.Error())
 	return err
 }
@@ -50,18 +52,28 @@ func loraConnect() error {
 func createPayload() ([]byte, error) {
 	encoder.Reset()
 	
+	// battery voltage
 	encoder.AddAnalogInput(1, float64(voltage)/1000)
 	
+	// BMP180 barometer
 	encoder.AddBarometricPressure(2, float64(pressure)/100000)
-	encoder.AddTemperature(2, float64(temperature)/1000)
-	encoder.AddAnalogInput(2, float64(altitude)/1000)
 
-	encoder.AddAccelerometer(3, float64(ax)/1000000, float64(ay)/1000000, float64(az)/1000000)
-	encoder.AddGyrometer(3, float64(ax)/1000000, float64(ay)/1000000, float64(az)/1000000)
+	// BMP180 temperature
+	encoder.AddTemperature(3, float64(temperature)/1000)
 
+	// BMP180 altitude
+	encoder.AddAnalogInput(4, float64(altitude))
+
+	// MPU-6050 gyrometer
+	encoder.AddAccelerometer(5, float64(ax)/1000000, float64(ay)/1000000, float64(az)/1000000)
+
+	// MPU-6050 gyrometer
+	encoder.AddGyrometer(6, float64(ax)/1000000, float64(ay)/1000000, float64(az)/1000000)
+
+	// GPS
 	if fix.Valid {
 		println(float64(fix.Latitude), float64(fix.Longitude), float64(fix.Altitude))
-		encoder.AddGPS(4, float64(fix.Latitude), float64(fix.Longitude), float64(fix.Altitude))
+		encoder.AddGPS(7, float64(fix.Latitude), float64(fix.Longitude), float64(fix.Altitude))
 	}
 
 	payload := encoder.Bytes()
@@ -69,14 +81,36 @@ func createPayload() ([]byte, error) {
 	return payload, nil
 }
 
-// These are sample keys, so the example builds
-// Either change here, or create a new go file and use customkeys build tag
-func setLorawanKeys() {
-	otaa.SetAppEUI([]uint8{0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x04, 0xA9, 0x12})
-	otaa.SetDevEUI([]uint8{0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x05, 0x96, 0xEE})
-	otaa.SetAppKey([]uint8{0xD8, 0x98, 0x88, 0xEF, 0xF0, 0xB2, 0x61, 0xCB, 0x4D, 0x57, 0x03, 0xAD, 0xD5, 0x87, 0xEF, 0x2B})
-}
+var (
+	appEUI string
+	devEUI string
+	appKey string
+)
 
-// AT+ID=AppEui, 70B3D57ED004A912
-// AT+ID=DevEui, 70B3D57ED005933B -> 70B3D57ED00596EE
-// AT+KEY=APPKEY, 6757BB981D0E2671F40F534F6E4CD87F -> D89888EFF0B261CB4D5703ADD587EF2B
+func setLorawanKeys() error {
+	if appEUI == "" || devEUI == "" || appKey == "" {
+		return errNoKeys
+	}
+
+	appEUIData, err := hex.DecodeString(appEUI)
+	if err != nil {
+		return err
+	}
+	otaa.SetAppEUI(appEUIData)
+
+	devEUIData, err := hex.DecodeString(devEUI)
+	if err != nil {
+		return err
+	}
+	otaa.SetDevEUI(devEUIData)
+
+	appKeyData, err := hex.DecodeString(appKey)
+	if err != nil {
+		return err
+	}
+	otaa.SetAppKey(appKeyData)
+
+	lorawan.SetPublicNetwork(true)
+
+	return nil
+}

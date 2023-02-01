@@ -2,7 +2,7 @@ module github.com/hybridgroup/sparkie
 
 go 1.19
 
-require tinygo.org/x/drivers v0.23.1-0.20230127204208-e6cde8f7ae19
+require tinygo.org/x/drivers v0.23.1-0.20230201080843-fae43071906a
 
 require github.com/TheThingsNetwork/go-cayenne-lib v1.1.0
 

@@ -9,9 +9,11 @@ import (
 	"tinygo.org/x/drivers/sx126x"
 )
 
-const FREQ                      = 868100000
-
 var (
+	spi                        = machine.SPI1
+	nssPin, busyPin, dio1Pin   = machine.GP13, machine.GP7, machine.GP6
+	rxPin, txLowPin, txHighPin = machine.GP9, machine.GP8, machine.GP8
+
 	loraRadio *sx126x.Device
 )
 
@@ -28,31 +30,11 @@ func setupLora() (lora.Radio, error) {
 	loraRadio = sx126x.New(spi)
 	loraRadio.SetDeviceType(sx126x.DEVICE_TYPE_SX1262)
 
-	// Create radio controller for target
-	loraRadio.SetRadioController(newRadioControl())
+	loraRadio.SetRadioController(sx126x.NewRadioControl(nssPin, busyPin, dio1Pin, rxPin, txLowPin, txHighPin))
 
 	if state := loraRadio.DetectDevice(); !state {
 		return nil, errors.New("LoRa radio not found")
 	}
 
-	loraConf := lora.Config{
-		Freq:           FREQ,
-		Bw:             lora.Bandwidth_125_0,
-		Sf:             lora.SpreadingFactor10,
-		Cr:             lora.CodingRate4_7,
-		HeaderType:     lora.HeaderExplicit,
-		Preamble:       12,
-		Iq:             lora.IQStandard,
-		Crc:            lora.CRCOn,
-		SyncWord:       lora.SyncPublic,
-		LoraTxPowerDBm: 20,
-	}
-
-	loraRadio.LoraConfig(loraConf)
-
 	return loraRadio, nil
-}
-
-func newRadioControl() sx126x.RadioController {
-	return sx126x.NewRadioControl(nssPin, busyPin, dio1Pin, rxPin, txLowPin, txHighPin)
 }
