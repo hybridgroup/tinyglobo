@@ -2,7 +2,9 @@
 
 A small balloon floats into the great big world, towing a RP2040 programmed with TinyGo. This intrepid explorer reports data using LoRaWAN long-range radio.
 
-![](./images/tinyglobo-1-fosdem-4.jpeg)
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-4.jpeg)
+
+Check out the [flight](./flights.md) page for more images.
 
 ## Flashing
 

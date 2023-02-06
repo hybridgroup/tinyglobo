@@ -4,6 +4,8 @@ Released in Brussels, Belgium on February 5, 2023 from Université Libre de Brux
 
 ## Dashboard
 
+![](./images/tinyglobo-1-route.jpeg)
+
 Available online at tinyglobo.com
 
 ## Flight Data
@@ -16,3 +18,13 @@ Available online at tinyglobo.com
 |Lowest recorded temperature|-18 C|
 |Last recorded battery voltage|2.75 V|
 |Payload weight|25.3 g|
+
+## Images
+
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-1.jpeg)
+
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-2.jpeg)
+
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-3.jpeg)
+
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-4.jpeg)
