@@ -1,5 +1,7 @@
 # Balloons
 
+![TinyGlobo 1 balloons](./images/tinyglobo-1-balloons.jpeg)
+
 ***NOTE: keep at least 1 clip attached to each balloon at all times!!!!***
 
 You will need 4 - 36 inch transparent balloons. Cheap ones are fine, as long as you check for pinhole leaks while filling.
