@@ -19,7 +19,9 @@ make flash
 Put your LoRaWAN keys into the `/keys` directory as explained in the README located there.
 
 
-## Wiring
+## Hardware
+
+![TinyGlobo 1 board](./images/tinyglobo-1-board.jpeg)
 
 TinyGlobo 1 consists of:
 
@@ -30,6 +32,8 @@ TinyGlobo 1 consists of:
     - MPU6050
     - BMP180
     - HMC5883L
+
+## Wiring
 
 ### GPS
 
