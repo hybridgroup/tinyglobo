@@ -4,7 +4,9 @@ A small balloon floats into the great big world, towing a RP2040 programmed with
 
 ![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-4.jpeg)
 
-Check out the [flight](./flights.md) page for more images.
+![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-route.jpeg)
+
+Check out the [flight](./flights.md) page for more info.
 
 ## Flashing
 
@@ -12,7 +14,10 @@ Check out the [flight](./flights.md) page for more images.
 make flash
 ```
 
-Put your keys into the `/keys` directory as explained there.
+## LoRaWAN credentials
+
+Put your LoRaWAN keys into the `/keys` directory as explained in the README located there.
+
 
 ## Wiring
 
