@@ -6,6 +6,8 @@ A small balloon floats into the great big world, towing a RP2040 programmed with
 
 ![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-route.jpeg)
 
+TinyGlobo 1 dashboard located here: https://cayenne.mydevices.com/shared/63da815d110400158f742f21
+
 Check out the [flight](./flights.md) page for more info.
 
 ## Flashing
