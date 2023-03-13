@@ -1,6 +1,8 @@
 # TinyGlobo
 
-A small balloon floats into the great big world, towing a RP2040 programmed with TinyGo. This intrepid explorer reports data using LoRaWAN long-range radio.
+A pico balloon floats into the great big world, towing a [Raspberry Pi RP2040 Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) programmed with [TinyGo](https://tinygo.org). 
+
+This intrepid explorer reports data using LoRaWAN long-range radio over [The Things Network](https://www.thethingsnetwork.org/)
 
 ![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-4.jpeg)
 
