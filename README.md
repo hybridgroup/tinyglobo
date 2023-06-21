@@ -4,13 +4,9 @@ A pico balloon floats into the great big world, towing a [Raspberry Pi RP2040 Pi
 
 This intrepid explorer reports data using LoRaWAN long-range radio over [The Things Network](https://www.thethingsnetwork.org/)
 
-![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-fosdem-4.jpeg)
 
-![https://twitter.com/unicod3/status/1622259887773188099](./images/tinyglobo-1-route.jpeg)
 
-TinyGlobo 1 dashboard located here: https://cayenne.mydevices.com/shared/63da815d110400158f742f21
-
-Check out the [flight](./flights.md) page for more info.
+Check out the [flight](./flights.md) page for info about TinyGlobo 1.
 
 ## Flashing
 
@@ -75,5 +71,5 @@ TinyGlobo 1 consists of:
 
 ### GPS
 
-tinygo flash -target pico ./samples/gps
+tinygo flash -target pico ./verify/gps
 
