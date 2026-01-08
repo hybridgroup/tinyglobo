@@ -3,59 +3,59 @@ package main
 import (
 	"time"
 
-	"tinygo.org/x/drivers/lora"
-	"tinygo.org/x/drivers/lora/lorawan"
-	"tinygo.org/x/drivers/lora/lorawan/region"
+	"tinygo.org/x/wireless/wspr"
 )
 
 func main() {
 	time.Sleep(5 * time.Second)
-	println("*** TinyGlobo 1 starting... ***")
+	println("*** TinyGlobo 3 starting... ***")
 
-	// setup LoRa radio
+	go startGPS()
+
+	// setup radio
 	var err error
-	radio, err = setupLora()
+	radio, err := initRadio()
 	if err != nil {
 		failMessage(err)
 	}
 
-	// Connect LoRaWAN to use the LoRa Radio device.
-	lorawan.UseRadio(radio)
+	frequency := radio.GetBaseFrequency()
+	println("Transmitting on frequency", frequency, "Hz")
 
-	// use EU868 DR2 spreading factor for high-altitude
-	settings := region.EU868()
-	settings.UplinkChannel().SpreadingFactor = lora.SpreadingFactor10
-	lorawan.UseRegionSettings(settings)
-
-	// Try to connect to the LoRaWAN network
-	if err := lorawanJoin(); err != nil {
-		failMessage(err)
-	}
-
-	go startGPS()
+	data := make([]byte, 162)
 
 	startBattery()
 	startSensors()
 
 	for {
-		println("Sleeping for", uplinkDelaySeconds, "seconds")
-		time.Sleep(time.Second * uplinkDelaySeconds)
+		// println("Sleeping for", uplinkDelaySeconds, "seconds")
+		// time.Sleep(time.Second * uplinkDelaySeconds)
+		println("Waiting for next transmission...")
+		time.Sleep(15 * time.Second)
 
 		readBattery()
 		readSensors()
 
-		payload, err := createPayload()
+		// Example WSPR packet data
+		// K1ABC FN42 37
+		// See https://en.wikipedia.org/wiki/WSPR_(amateur_radio_software)
+		msg, err := wspr.NewMessage("K1ABC", "FN42", 37)
 		if err != nil {
-			println("Payload error:", err)
-			continue
+			println("Error creating WSPR message:", err.Error())
+			return
 		}
 
-		if err := lorawan.SendUplink(payload, session); err != nil {
-			println("Uplink error:", err)
-			continue
+		n, err := msg.WriteSymbols(data)
+		if err != nil {
+			println("error writing WSPR message")
+			return
 		}
-			
-		println("Uplink complete, msglen=", len(payload))
+
+		println("Transmitting WSPR message with", n, "symbols")
+		if err := radio.WriteSymbols(data[:n]); err != nil {
+			println("error transmitting WSPR message:", err.Error())
+			return
+		}
 	}
 }
 

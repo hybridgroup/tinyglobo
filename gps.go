@@ -11,18 +11,44 @@ import (
 var fix gps.Fix
 
 func startGPS() {
-	machine.UART0.Configure(machine.UARTConfig{BaudRate: 9600})
-	ublox := gps.NewUART(machine.UART0)
+	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
+
+	reset := machine.GPIO6
+	reset.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	gpsPowerOn := machine.GPIO3
+	gpsPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	gpsLoadSwitch := machine.GPIO2
+	gpsLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
+
+	// Power on GPS
+	gpsLoadSwitch.Low()
+	reset.High()
+	gpsPowerOn.High()
+	time.Sleep(500 * time.Millisecond)
+
+	ublox := gps.NewUART(machine.UART1)
 	parser := gps.NewParser()
 	for {
 		s, err := ublox.NextSentence()
 		if err != nil {
-			continue
+			switch err {
+			case gps.ErrUnknownNMEASentence, gps.ErrInvalidNMEASentence, gps.ErrInvalidNMEASentenceLength:
+				continue
+			default:
+				println("sentence error:", err)
+				continue
+			}
 		}
 
 		newfix, err := parser.Parse(s)
 		if err != nil {
-			continue
+			switch err {
+			case gps.ErrUnknownNMEASentence, gps.ErrInvalidNMEASentence, gps.ErrInvalidNMEASentenceLength:
+				continue
+			default:
+				println("parse error:", err)
+				continue
+			}
 		}
 		if newfix.Valid {
 			fix = newfix

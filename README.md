@@ -2,13 +2,13 @@
 
 A pico balloon floats into the great big world, towing a [Raspberry Pi RP2040 Pico](https://www.raspberrypi.com/products/raspberry-pi-pico/) programmed with [TinyGo](https://tinygo.org). 
 
-This intrepid explorer reports data using LoRaWAN long-range radio over [The Things Network](https://www.thethingsnetwork.org/)
+This intrepid explorer reports data using 20 meter band radio using the WSPR protocol.
 
-TinyGlobo 2 dashboard located here: https://cayenne.mydevices.com/shared/649c081073cdbf6039802640
+TinyGlobo 3 dashboard coming soon...
 
 ## Previous flights
 
-Check out the [flight](./flights.md) page for info about TinyGlobo 1.
+Check out the [flight](./flights.md) page for info about TinyGlobo 1-2
 
 ## Flashing
 
@@ -16,24 +16,20 @@ Check out the [flight](./flights.md) page for info about TinyGlobo 1.
 make flash
 ```
 
-## LoRaWAN credentials
+## Callsign
 
-Put your LoRaWAN keys into the `/keys` directory as explained in the README located there.
-
+More info here...
 
 ## Hardware
 
-![TinyGlobo 1 board](./images/tinyglobo-1-board.jpeg)
+![TinyGlobo 3 board](./images/tinyglobo-3-board.jpeg)
 
-TinyGlobo 1 consists of:
+TinyGlobo 3 is uses the [Traquito Jetpack Tracker](https://traquito.github.io/tracker/) which consists of:
 
 - RP2040 Pico
-- LAMBDA62 LoRa radio
-- UBlox 6M GPS
-- HW-290 multifunction I2C board
-    - MPU6050
-    - BMP180
-    - HMC5883L
+- Si5351 radio
+- GPS
+- Solar power system
 
 ## Wiring
 
@@ -41,31 +37,26 @@ TinyGlobo 1 consists of:
 
 | RP2040 Pin | GPS Pin |
 |------------|---------|
-| GP0 UART TX | RX |
-| GP1 UART RX | TX |
-| 3V3 | VCC |
+| GPIO8 UART1 TX | RX |
+| GPIO9 UART1 RX | TX |
+| GPIO3 | VCC |
+| GPIO6 | RESET |
+| GPIO2 | LOAD (pull low to use) |
 
-### Sensors
+### Si5351
+
+| RP2040 Pin | Si5351 Pin |
+|------------|---------|
+| GPIO4 I2C0 SDA | SDA |
+| GPIO5 I2C0 SCL | SCL |
+| GPIO28 | Load (pull low to use) |
+
+### Power system
 
 | RP2040 Pin | HW-290 Pin |
 |------------|---------|
 | GP4 I2C0 SDA | SDA |
 | GP5 I2C0 SCL | SCL |
-| 3V3 | 3V3 |
-| GND | GND |
-
-### LAMBDA62 (SX1262)
-
-| RP2040 Pin | LAMBDA62 Pin |
-|------------|---------|
-| GP6 | DIO1 |
-| GP7 | DIO0 |
-| GP8 | TX_SWITCH |
-| GP9 | RX_SWITCH |
-| GP10 | SCLK |
-| GP11 SPI0 CDO | SDI |
-| GP12 SPI0 CDI | SDO |
-| GP13 SPI0 CS | nSEL |
 | 3V3 | 3V3 |
 | GND | GND |
 
