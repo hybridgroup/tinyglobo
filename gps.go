@@ -3,32 +3,61 @@ package main
 import (
 	"machine"
 
+	"runtime"
 	"time"
 
 	"tinygo.org/x/drivers/gps"
 )
 
-var fix gps.Fix
+var (
+	ublox      *gps.Device
+	currentFix gps.Fix
+)
 
-func startGPS() {
-	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
+var (
+	gpsReset          = machine.GPIO6
+	gpsLoadSwitch     = machine.GPIO2
+	gpsBatteryPowerOn = machine.GPIO3
+)
 
-	reset := machine.GPIO6
-	reset.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	gpsPowerOn := machine.GPIO3
-	gpsPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	gpsLoadSwitch := machine.GPIO2
+var (
+	gpsStopChan        chan struct{}
+	lastTimeAdjustment time.Time
+)
+
+// initialize GPS (called once at startup)
+func initGPS() {
+	// used to reset GPS module
+	gpsReset.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	gpsReset.Low()
+
+	// used to control GPS power. high means off. can turn off when not in use.
 	gpsLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	gpsLoadSwitch.High()
 
+	// used to control GPS battery power. leave on for warm starts.
+	gpsBatteryPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	gpsBatteryPowerOn.High()
+}
+
+// start GPS reading goroutine
+func startGPS() {
 	// Power on GPS
 	gpsLoadSwitch.Low()
-	reset.High()
-	gpsPowerOn.High()
+	gpsReset.High()
 	time.Sleep(500 * time.Millisecond)
 
-	ublox := gps.NewUART(machine.UART1)
+	u := gps.NewUART(machine.UART1)
+	ublox = &u
 	parser := gps.NewParser()
+	gpsStopChan = make(chan struct{})
 	for {
+		select {
+		case <-gpsStopChan:
+			return
+		default:
+		}
+
 		s, err := ublox.NextSentence()
 		if err != nil {
 			switch err {
@@ -51,24 +80,42 @@ func startGPS() {
 			}
 		}
 		if newfix.Valid {
-			fix = newfix
-			print(fix.Time.Format("15:04:05"))
-			print(", lat=")
-			print(fix.Latitude)
-			print(", long=")
-			print(fix.Longitude)
-			print(", altitude=", fix.Altitude)
-			print(", satellites=", fix.Satellites)
-			if fix.Speed != 0 {
-				print(", speed=")
-				print(fix.Speed)
+			currentFix = newfix
+
+			// adjust time based on GPS time
+			if time.Since(lastTimeAdjustment) > time.Minute*10 {
+				runtime.AdjustTimeOffset(int64(currentFix.Time.Sub(time.Now())))
+				lastTimeAdjustment = time.Now()
 			}
-			if fix.Heading != 0 {
-				print(", heading=")
-				print(fix.Heading)
-			}
-			println()
+
+			// print(currentFix.Time.Format("15:04:05"))
+			// print(", lat=")
+			// print(currentFix.Latitude)
+			// print(", long=")
+			// print(currentFix.Longitude)
+			// print(", altitude=", currentFix.Altitude)
+			// print(", satellites=", currentFix.Satellites)
+			// if currentFix.Speed != 0 {
+			// 	print(", speed=")
+			// 	print(currentFix.Speed)
+			// }
+			// if currentFix.Heading != 0 {
+			// 	print(", heading=")
+			// 	print(currentFix.Heading)
+			// }
+			// println()
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
+}
+
+// stop GPS reading and power down GPS
+func stopGPS() {
+	close(gpsStopChan)
+	time.Sleep(100 * time.Millisecond)
+
+	// Power off GPS
+	gpsLoadSwitch.High()
+	gpsReset.Low()
+	time.Sleep(100 * time.Millisecond)
 }

@@ -8,13 +8,25 @@ import (
 	"tinygo.org/x/wireless/fsk4"
 )
 
-func initRadio() (*fsk4.FSK4, error) {
-	machine.I2C0.Configure(machine.I2CConfig{})
-	gpsLoadSwitch := machine.GPIO28
-	gpsLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	gpsLoadSwitch.High()
+var (
+	radio       Si5351Radio
+	transmitter *fsk4.FSK4
+)
+
+var (
+	radioLoadSwitch = machine.GPIO28
+)
+
+func initRadio() error {
+	radioLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	radioLoadSwitch.High()
 	time.Sleep(100 * time.Millisecond)
-	gpsLoadSwitch.Low()
+
+	return nil
+}
+
+func startRadio() error {
+	radioLoadSwitch.Low()
 	time.Sleep(100 * time.Millisecond)
 
 	dev := si5351.New(machine.I2C0)
@@ -23,7 +35,7 @@ func initRadio() (*fsk4.FSK4, error) {
 		CrystalOutput: 26_000_000,
 	}
 	if err := dev.Configure(cnf); err != nil {
-		return nil, err
+		return err
 	}
 
 	dev.SetFrequency(si5351.Clock0, 14_097_060)
@@ -46,10 +58,18 @@ func initRadio() (*fsk4.FSK4, error) {
 	dev.EnableOutput(si5351.Clock0, false)
 	dev.EnableOutput(si5351.Clock1, false)
 
-	f := fsk4.NewFSK4(&Si5351Radio{device: dev}, 14_097_060, 146, 682)
-	f.Configure()
+	radio.device = dev
 
-	return f, nil
+	transmitter = fsk4.NewFSK4(&radio, 14_097_060, 146, 682)
+	transmitter.Configure()
+
+	return nil
+}
+
+func stopRadio() error {
+	radioLoadSwitch.High()
+	time.Sleep(100 * time.Millisecond)
+	return nil
 }
 
 type Si5351Radio struct {
@@ -57,6 +77,8 @@ type Si5351Radio struct {
 }
 
 func (r *Si5351Radio) Transmit(freq uint64) error {
+	machine.Watchdog.Update()
+
 	if err := r.device.SetRawFrequency(si5351.Clock0, si5351.Frequency(freq)); err != nil {
 		return err
 	}
@@ -68,6 +90,8 @@ func (r *Si5351Radio) Transmit(freq uint64) error {
 }
 
 func (r *Si5351Radio) Standby() error {
+	machine.Watchdog.Update()
+
 	r.device.EnableOutput(si5351.Clock0, false)
 	r.device.EnableOutput(si5351.Clock1, false)
 
