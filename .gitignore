@@ -4,3 +4,5 @@ keys/*
 # exception to the rule
 !keys/README.md
  
+# ignore build artifacts
+*.uf2
