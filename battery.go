@@ -11,8 +11,7 @@ var (
 	voltage uint32
 )
 
-func startBattery() {
-	machine.InitADC()
+func initBattery() {
 	vsys.Configure(machine.ADCConfig{})
 }
 

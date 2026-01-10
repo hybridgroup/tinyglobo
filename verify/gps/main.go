@@ -41,6 +41,7 @@ func main() {
 			}
 		}
 
+		println(s)
 		fix, err = parser.Parse(s)
 		if err != nil {
 			switch err {
@@ -69,7 +70,7 @@ func main() {
 			}
 			println()
 		} else {
-			println("Waiting for fix...")
+			println("Waiting for fix...", fix.Satellites, "satellites")
 		}
 		time.Sleep(200 * time.Millisecond)
 	}

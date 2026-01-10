@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	radio       Si5351Radio
-	transmitter *fsk4.FSK4
+	radio        Si5351Radio
+	transmitter  *fsk4.FSK4
+	radioStarted bool
 )
 
 var (
@@ -63,12 +64,17 @@ func startRadio() error {
 	transmitter = fsk4.NewFSK4(&radio, 14_097_060, 146, 682)
 	transmitter.Configure()
 
+	radioStarted = true
+
 	return nil
 }
 
 func stopRadio() error {
 	radioLoadSwitch.High()
 	time.Sleep(100 * time.Millisecond)
+
+	radioStarted = false
+
 	return nil
 }
 
@@ -77,7 +83,7 @@ type Si5351Radio struct {
 }
 
 func (r *Si5351Radio) Transmit(freq uint64) error {
-	machine.Watchdog.Update()
+	// machine.Watchdog.Update()Update()
 
 	if err := r.device.SetRawFrequency(si5351.Clock0, si5351.Frequency(freq)); err != nil {
 		return err
@@ -90,7 +96,7 @@ func (r *Si5351Radio) Transmit(freq uint64) error {
 }
 
 func (r *Si5351Radio) Standby() error {
-	machine.Watchdog.Update()
+	// machine.Watchdog.Update()Update()
 
 	r.device.EnableOutput(si5351.Clock0, false)
 	r.device.EnableOutput(si5351.Clock1, false)

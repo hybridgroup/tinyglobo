@@ -21,6 +21,7 @@ var (
 )
 
 var (
+	gpsStarted         bool
 	gpsStopChan        chan struct{}
 	lastTimeAdjustment time.Time
 )
@@ -42,6 +43,8 @@ func initGPS() {
 
 // start GPS reading goroutine
 func startGPS() {
+	gpsStarted = true
+
 	// Power on GPS
 	gpsLoadSwitch.Low()
 	gpsReset.High()
@@ -83,9 +86,11 @@ func startGPS() {
 			currentFix = newfix
 
 			// adjust time based on GPS time
-			if time.Since(lastTimeAdjustment) > time.Minute*10 {
-				runtime.AdjustTimeOffset(int64(currentFix.Time.Sub(time.Now())))
-				lastTimeAdjustment = time.Now()
+			if newfix.Time.Sub(lastTimeAdjustment) > time.Minute*10 {
+				now := time.Now()
+				println("Adjusting system time based on GPS fix from", now.Format("15:04:05"), "to", newfix.Time.Format("15:04:05"))
+				runtime.AdjustTimeOffset(int64(newfix.Time.Sub(now)))
+				lastTimeAdjustment = newfix.Time
 			}
 
 			// print(currentFix.Time.Format("15:04:05"))
@@ -117,5 +122,6 @@ func stopGPS() {
 	// Power off GPS
 	gpsLoadSwitch.High()
 	gpsReset.Low()
-	time.Sleep(100 * time.Millisecond)
+
+	gpsStarted = false
 }

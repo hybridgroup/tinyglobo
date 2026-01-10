@@ -8,77 +8,95 @@ import (
 )
 
 var (
-	callsign string
+	callsign              string
+	transmissionFrequency = 10 * time.Minute
 
-	data             [162]byte
+	data             [128 + 64]byte
 	lastTransmission time.Time
 )
 
 func main() {
-	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
-	machine.I2C0.Configure(machine.I2CConfig{})
-
 	time.Sleep(3 * time.Second)
 	println("*** TinyGlobo 3 starting... ***")
 
-	// configure watchdog for 30 second timeout
-	machine.Watchdog.Configure(machine.WatchdogConfig{
-		TimeoutMillis: 30000,
-	})
+	// configure watchdog for 3 second timeout
+	// machine.Watchdog.Configure(machine.WatchdogConfig{
+	// 	TimeoutMillis: 3000,
+	// })
+	// machine.Watchdog.Start()
+
+	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
+	machine.I2C0.Configure(machine.I2CConfig{})
+	machine.InitADC()
 
 	initGPS()
-	go startGPS()
-
-	if err := initRadio(); err != nil {
-		failure(err)
-	}
-	startRadio()
-
-	frequency := transmitter.GetBaseFrequency()
-	println("Transmitting on frequency", frequency, "Hz")
-
-	startBattery()
-	startSensors()
+	initRadio()
+	initBattery()
+	initSensors()
 
 	for {
 		readBattery()
 
-		// wait until we have a fix
-		if !currentFix.Valid {
-			println("Waiting for GPS fix...")
-			machine.Watchdog.Update()
-			time.Sleep(15 * time.Second)
-			continue
-		}
+		// TODO: check if we have enough battery voltage to transmit
 
-		if time.Since(lastTransmission) < time.Minute*5 {
+		switch {
+		// ensure at least 10 minutes between transmissions
+		case time.Since(lastTransmission) < transmissionFrequency:
 			println("Last transmission was too recent, waiting...")
-			machine.Watchdog.Update()
-			time.Sleep(15 * time.Second)
+			watchAndWait(15)
 			continue
-		}
+
+		case !gpsStarted:
+			println("Starting GPS...")
+			// machine.Watchdog.Update()
+			go startGPS()
+			watchAndWait(15)
+			continue
+
+		// wait until we have a fix
+		case !currentFix.Valid:
+			println("Waiting for GPS fix...")
+			watchAndWait(15)
+			continue
 
 		// only transmit on even numbered minutes at exactly 5 second mark
-		if currentFix.Time.Minute()%2 != 0 {
-			println("Waiting for even numbered minute...")
-			continue
-		}
-		sleepDuration := time.Until(time.Date(currentFix.Time.Year(), currentFix.Time.Month(), currentFix.Time.Day(), currentFix.Time.Hour(), currentFix.Time.Minute(), 5, 0, currentFix.Time.Location()))
-		if sleepDuration > 0 {
-			println("Waiting until 5 seconds past the minute...")
-			time.Sleep(sleepDuration)
-		}
+		case time.Now().Minute()%2 != 0:
+			println("Preparing to transmit...")
 
-		readSensors()
-		transmitWSPRMessage()
+			// machine.Watchdog.Update()
+			stopGPS()
+			// machine.Watchdog.Update()
+			startRadio()
+			// machine.Watchdog.Update()
+			readSensors()
+
+			// sleep until the next minute that is even numbered
+			now := time.Now()
+			extra := now.Minute() % 2
+			sleepDuration := time.Until(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+extra, 0, 0, now.Location()))
+			if sleepDuration > 0 {
+				// round down to nearest second
+				sleepDuration -= time.Duration(sleepDuration.Nanoseconds() % 1_000_000_000)
+				println("Waiting until transmission window...")
+				watchAndWait(int(sleepDuration.Seconds()))
+			}
+			transmitWSPRMessage()
+			stopRadio()
+
+			// require new GPS fix for next transmission
+			currentFix.Valid = false // require new fix for next transmission
+		}
 	}
 }
 
 func transmitWSPRMessage() {
 	lastTransmission = time.Now()
+	// machine.Watchdog.Update()
 
 	println("Transmitting WSPR message...")
-	msg, err := wspr.NewMessage(callsign, wspr.Maidenhead(float64(currentFix.Latitude), float64(currentFix.Longitude)), 21)
+	location := wspr.Maidenhead(float64(currentFix.Latitude), float64(currentFix.Longitude))
+	println("Callsign:", callsign, "Location:", location, location[:4])
+	msg, err := wspr.NewMessage(callsign, location[:4], 37)
 	if err != nil {
 		println("Error creating WSPR message:", err.Error())
 		return
@@ -100,6 +118,13 @@ func transmitWSPRMessage() {
 func failure(err error) {
 	for {
 		println("FATAL:", err)
+		time.Sleep(time.Second)
+	}
+}
+
+func watchAndWait(seconds int) {
+	for i := 0; i < seconds; i++ {
+		// machine.Watchdog.Update()
 		time.Sleep(time.Second)
 	}
 }
