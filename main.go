@@ -33,6 +33,8 @@ func main() {
 	initBattery()
 	initSensors()
 
+	startNotification(10 * time.Second)
+
 	for {
 		readBattery()
 
@@ -48,6 +50,7 @@ func main() {
 		case !gpsStarted:
 			println("Starting GPS...")
 			// machine.Watchdog.Update()
+			Status = StatusAcquiringFix
 			go startGPS()
 			watchAndWait(15)
 			continue
@@ -61,6 +64,7 @@ func main() {
 		// only transmit on even numbered minutes at exactly 5 second mark
 		case time.Now().Minute()%2 != 0:
 			println("Preparing to transmit...")
+			Status = StatusReadyToTransmit
 
 			stopGPS()
 			startRadio()
@@ -76,11 +80,14 @@ func main() {
 				println("Waiting until transmission window...")
 				watchAndWait(int(sleepDuration.Seconds()))
 			}
+			Status = StatusTransmitting
 			transmitWSPRMessage()
 			stopRadio()
 
+			Status = StatusIdle
+			println("Transmission complete.")
 			// require new GPS fix for next transmission
-			currentFix.Valid = false // require new fix for next transmission
+			currentFix.Valid = false
 		}
 	}
 }
