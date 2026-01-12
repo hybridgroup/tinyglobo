@@ -27,6 +27,7 @@ func initRadio() error {
 }
 
 func startRadio() error {
+	// machine.Watchdog.Update()
 	radioLoadSwitch.Low()
 	time.Sleep(100 * time.Millisecond)
 
@@ -70,6 +71,7 @@ func startRadio() error {
 }
 
 func stopRadio() error {
+	// machine.Watchdog.Update()
 	radioLoadSwitch.High()
 	time.Sleep(100 * time.Millisecond)
 
@@ -96,7 +98,7 @@ func (r *Si5351Radio) Transmit(freq uint64) error {
 }
 
 func (r *Si5351Radio) Standby() error {
-	// machine.Watchdog.Update()Update()
+	// machine.Watchdog.Update()
 
 	r.device.EnableOutput(si5351.Clock0, false)
 	r.device.EnableOutput(si5351.Clock1, false)

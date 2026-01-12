@@ -43,6 +43,7 @@ func initGPS() {
 
 // start GPS reading goroutine
 func startGPS() {
+	// machine.Watchdog.Update()
 	gpsStarted = true
 
 	// Power on GPS
@@ -50,6 +51,7 @@ func startGPS() {
 	gpsReset.High()
 	time.Sleep(500 * time.Millisecond)
 
+	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
 	u := gps.NewUART(machine.UART1)
 	ublox = &u
 	parser := gps.NewParser()
@@ -116,12 +118,14 @@ func startGPS() {
 
 // stop GPS reading and power down GPS
 func stopGPS() {
+	// machine.Watchdog.Update()
 	close(gpsStopChan)
 	time.Sleep(100 * time.Millisecond)
 
 	// Power off GPS
-	gpsLoadSwitch.High()
+	machine.UART1_TX_PIN.Low()
 	gpsReset.Low()
+	gpsLoadSwitch.High()
 
 	gpsStarted = false
 }

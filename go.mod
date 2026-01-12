@@ -2,6 +2,8 @@ module github.com/hybridgroup/tinyglobo
 
 go 1.25.3
 
+replace tinygo.org/x/drivers => ../tinygo/drivers
+
 require tinygo.org/x/drivers v0.34.1-0.20260108130541-892265b7332b
 
 require (

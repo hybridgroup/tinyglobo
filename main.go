@@ -25,7 +25,6 @@ func main() {
 	// })
 	// machine.Watchdog.Start()
 
-	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
 	machine.I2C0.Configure(machine.I2CConfig{})
 	machine.InitADC()
 
@@ -63,11 +62,8 @@ func main() {
 		case time.Now().Minute()%2 != 0:
 			println("Preparing to transmit...")
 
-			// machine.Watchdog.Update()
 			stopGPS()
-			// machine.Watchdog.Update()
 			startRadio()
-			// machine.Watchdog.Update()
 			readSensors()
 
 			// sleep until the next minute that is even numbered
