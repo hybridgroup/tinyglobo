@@ -21,9 +21,9 @@ var (
 )
 
 var (
-	gpsStarted         bool
-	gpsStopChan        chan struct{}
-	lastTimeAdjustment time.Time
+	gpsStarted     bool
+	gpsStopChan    chan struct{}
+	gpsFixAcquired bool
 )
 
 // initialize GPS (called once at startup)
@@ -54,6 +54,9 @@ func startGPS() {
 	machine.UART1.Configure(machine.UARTConfig{BaudRate: 9600, RX: machine.UART1_RX_PIN, TX: machine.UART1_TX_PIN})
 	u := gps.NewUART(machine.UART1)
 	ublox = &u
+
+	gps.SetMessageRatesMinimal(ublox)
+
 	parser := gps.NewParser()
 	gpsStopChan = make(chan struct{})
 	for {
@@ -88,30 +91,14 @@ func startGPS() {
 			currentFix = newfix
 
 			// adjust time based on GPS time
-			if newfix.Time.Sub(lastTimeAdjustment) > time.Minute*10 {
+			if !gpsFixAcquired {
 				now := time.Now()
 				println("Adjusting system time based on GPS fix from", now.Format("15:04:05"), "to", newfix.Time.Format("15:04:05"))
 				runtime.AdjustTimeOffset(int64(newfix.Time.Sub(now)))
-				lastTimeAdjustment = newfix.Time
+				gpsFixAcquired = true
 			}
-
-			// print(currentFix.Time.Format("15:04:05"))
-			// print(", lat=")
-			// print(currentFix.Latitude)
-			// print(", long=")
-			// print(currentFix.Longitude)
-			// print(", altitude=", currentFix.Altitude)
-			// print(", satellites=", currentFix.Satellites)
-			// if currentFix.Speed != 0 {
-			// 	print(", speed=")
-			// 	print(currentFix.Speed)
-			// }
-			// if currentFix.Heading != 0 {
-			// 	print(", heading=")
-			// 	print(currentFix.Heading)
-			// }
-			// println()
 		}
+
 		time.Sleep(200 * time.Millisecond)
 	}
 }
@@ -123,9 +110,9 @@ func stopGPS() {
 	time.Sleep(100 * time.Millisecond)
 
 	// Power off GPS
-	machine.UART1_TX_PIN.Low()
 	gpsReset.Low()
 	gpsLoadSwitch.High()
 
 	gpsStarted = false
+	gpsFixAcquired = false
 }
