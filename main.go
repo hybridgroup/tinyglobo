@@ -19,26 +19,33 @@ func main() {
 	time.Sleep(3 * time.Second)
 	println("*** TinyGlobo 3 starting... ***")
 
-	// configure watchdog for 3 second timeout
-	// machine.Watchdog.Configure(machine.WatchdogConfig{
-	// 	TimeoutMillis: 3000,
-	// })
-	// machine.Watchdog.Start()
+	startNotification(5 * time.Second)
+
+	initWatchdog()
+
+	machine.InitADC()
+	initBattery()
+	for {
+		readBattery()
+		if voltage > desiredBatteryVoltage {
+			break
+		}
+	}
 
 	machine.I2C0.Configure(machine.I2CConfig{})
-	machine.InitADC()
 
 	initGPS()
 	initRadio()
-	initBattery()
 	initSensors()
 
-	startNotification(10 * time.Second)
-
 	for {
+		// check if we have enough battery voltage to transmit
 		readBattery()
-
-		// TODO: check if we have enough battery voltage to transmit
+		// if voltage < desiredBatteryVoltage {
+		// 	Status = StatusIdle
+		// 	watchAndWait(15)
+		// 	continue
+		// }
 
 		switch {
 		// ensure at least 10 minutes between transmissions
@@ -47,22 +54,21 @@ func main() {
 			watchAndWait(15)
 			continue
 
-		case !gpsStarted:
+		case !gpsStarted && !gpsFixAcquired:
 			println("Starting GPS...")
-			// machine.Watchdog.Update()
 			Status = StatusAcquiringFix
 			go startGPS()
-			watchAndWait(15)
+			watchAndWait(5)
 			continue
 
 		// wait until we have a fix
-		case !currentFix.Valid:
+		case gpsStarted && !gpsFixAcquired:
+			// TODO: add timeout and restart GPS if needed
 			println("Waiting for GPS fix...")
-			watchAndWait(15)
+			watchAndWait(5)
 			continue
 
-		// only transmit on even numbered minutes at exactly 5 second mark
-		case time.Now().Minute()%2 != 0:
+		case gpsFixAcquired:
 			println("Preparing to transmit...")
 			Status = StatusReadyToTransmit
 
@@ -70,31 +76,42 @@ func main() {
 			startRadio()
 			readSensors()
 
-			// sleep until the next minute that is even numbered
+			// only transmit on even numbered minutes
 			now := time.Now()
-			extra := now.Minute() % 2
-			sleepDuration := time.Until(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+extra, 0, 0, now.Location()))
+			minute := now.Minute()
+			nextEvenMinute := (minute + 2 - (minute % 2)) % 60
+			nextTime := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), nextEvenMinute, 0, 0, now.Location())
+
+			// If the next even minute is less than 1 minute away, skip to the following even minute
+			if nextTime.Sub(now) < time.Minute {
+				nextEvenMinute = (nextEvenMinute + 2) % 60
+				nextTime = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), nextEvenMinute, 0, 0, now.Location())
+			}
+
+			sleepDuration := time.Until(nextTime)
 			if sleepDuration > 0 {
 				// round down to nearest second
 				sleepDuration -= time.Duration(sleepDuration.Nanoseconds() % 1_000_000_000)
 				println("Waiting until transmission window...")
 				watchAndWait(int(sleepDuration.Seconds()))
 			}
+
 			Status = StatusTransmitting
 			transmitWSPRMessage()
 			stopRadio()
 
 			Status = StatusIdle
 			println("Transmission complete.")
+
 			// require new GPS fix for next transmission
-			currentFix.Valid = false
+			gpsFixAcquired = false
 		}
 	}
 }
 
 func transmitWSPRMessage() {
 	lastTransmission = time.Now()
-	// machine.Watchdog.Update()
+	updateWatchdog()
 
 	println("Transmitting WSPR message...")
 	location := wspr.Maidenhead(float64(currentFix.Latitude), float64(currentFix.Longitude))
@@ -121,13 +138,6 @@ func transmitWSPRMessage() {
 func failure(err error) {
 	for {
 		println("FATAL:", err)
-		time.Sleep(time.Second)
-	}
-}
-
-func watchAndWait(seconds int) {
-	for i := 0; i < seconds; i++ {
-		// machine.Watchdog.Update()
 		time.Sleep(time.Second)
 	}
 }

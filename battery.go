@@ -4,6 +4,11 @@ import (
 	"machine"
 )
 
+const (
+	minBatteryVoltage     = 2500 // millivolts
+	desiredBatteryVoltage = 3000 // millivolts
+)
+
 var (
 	vsys = machine.ADC{machine.ADC3}
 

@@ -27,7 +27,7 @@ func initRadio() error {
 }
 
 func startRadio() error {
-	// machine.Watchdog.Update()
+	updateWatchdog()
 	radioLoadSwitch.Low()
 	time.Sleep(100 * time.Millisecond)
 
@@ -40,6 +40,7 @@ func startRadio() error {
 		return err
 	}
 
+	updateWatchdog()
 	dev.SetFrequency(si5351.Clock0, 14_097_060)
 	dev.SetDriveStrength(si5351.Clock0, si5351.DriveStrength8MA)
 	dev.SetClockPower(si5351.Clock0, true)
@@ -55,6 +56,7 @@ func startRadio() error {
 	dev.SetClockPower(si5351.Clock1, true)
 	dev.EnableOutput(si5351.Clock1, true)
 
+	updateWatchdog()
 	time.Sleep(500 * time.Millisecond)
 
 	dev.EnableOutput(si5351.Clock0, false)
@@ -71,7 +73,7 @@ func startRadio() error {
 }
 
 func stopRadio() error {
-	// machine.Watchdog.Update()
+	updateWatchdog()
 	radioLoadSwitch.High()
 	time.Sleep(100 * time.Millisecond)
 
@@ -85,7 +87,7 @@ type Si5351Radio struct {
 }
 
 func (r *Si5351Radio) Transmit(freq uint64) error {
-	// machine.Watchdog.Update()Update()
+	updateWatchdog()
 
 	if err := r.device.SetRawFrequency(si5351.Clock0, si5351.Frequency(freq)); err != nil {
 		return err
@@ -98,7 +100,7 @@ func (r *Si5351Radio) Transmit(freq uint64) error {
 }
 
 func (r *Si5351Radio) Standby() error {
-	// machine.Watchdog.Update()
+	updateWatchdog()
 
 	r.device.EnableOutput(si5351.Clock0, false)
 	r.device.EnableOutput(si5351.Clock1, false)

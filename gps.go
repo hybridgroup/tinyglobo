@@ -43,8 +43,9 @@ func initGPS() {
 
 // start GPS reading goroutine
 func startGPS() {
-	// machine.Watchdog.Update()
+	updateWatchdog()
 	gpsStarted = true
+	gpsFixAcquired = false
 
 	// Power on GPS
 	gpsLoadSwitch.Low()
@@ -98,6 +99,11 @@ func startGPS() {
 				gpsFixAcquired = true
 			}
 		}
+		if !gpsFixAcquired {
+			if newfix.Type == gps.GSV {
+				println("Satellites in view:", newfix.Satellites)
+			}
+		}
 
 		time.Sleep(200 * time.Millisecond)
 	}
@@ -105,14 +111,18 @@ func startGPS() {
 
 // stop GPS reading and power down GPS
 func stopGPS() {
-	// machine.Watchdog.Update()
+	updateWatchdog()
 	close(gpsStopChan)
 	time.Sleep(100 * time.Millisecond)
 
 	// Power off GPS
+	machine.UART1.Close()
+	machine.UART1_TX_PIN.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	machine.UART1_TX_PIN.Low()
+	machine.UART1_RX_PIN.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	machine.UART1_RX_PIN.Low()
 	gpsReset.Low()
 	gpsLoadSwitch.High()
 
 	gpsStarted = false
-	gpsFixAcquired = false
 }
