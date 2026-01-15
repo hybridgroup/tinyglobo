@@ -21,9 +21,10 @@ var (
 )
 
 var (
-	gpsStarted     bool
-	gpsStopChan    chan struct{}
-	gpsFixAcquired bool
+	gpsStarted      bool
+	gpsStopChan     chan struct{}
+	gpsFixAcquired  bool
+	gpsTimeAdjusted bool
 )
 
 // initialize GPS (called once at startup)
@@ -90,14 +91,18 @@ func startGPS() {
 		}
 		if newfix.Valid {
 			currentFix = newfix
+			if newfix.Type == gps.GGA || newfix.Type == gps.RMC {
+				altitude = newfix.Altitude
+			}
 
 			// adjust time based on GPS time
-			if !gpsFixAcquired {
+			if !gpsTimeAdjusted {
 				now := time.Now()
 				println("Adjusting system time based on GPS fix from", now.Format("15:04:05"), "to", newfix.Time.Format("15:04:05"))
 				runtime.AdjustTimeOffset(int64(newfix.Time.Sub(now)))
-				gpsFixAcquired = true
+				gpsTimeAdjusted = true
 			}
+			gpsFixAcquired = true
 		}
 		if !gpsFixAcquired {
 			if newfix.Type == gps.GSV {

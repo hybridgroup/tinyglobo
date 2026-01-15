@@ -48,12 +48,6 @@ func main() {
 		// }
 
 		switch {
-		// ensure at least 10 minutes between transmissions
-		case time.Since(lastTransmission) < transmissionFrequency:
-			println("Last transmission was too recent, waiting...")
-			watchAndWait(15)
-			continue
-
 		case !gpsStarted && !gpsFixAcquired:
 			println("Starting GPS...")
 			Status = StatusAcquiringFix
@@ -65,36 +59,22 @@ func main() {
 		case gpsStarted && !gpsFixAcquired:
 			// TODO: add timeout and restart GPS if needed
 			println("Waiting for GPS fix...")
-			watchAndWait(5)
+			watchAndWait(1)
 			continue
 
 		case gpsFixAcquired:
 			println("Preparing to transmit...")
 			Status = StatusReadyToTransmit
-
 			stopGPS()
+
+			transmit := nextScheduledTransmission()
+			println("Next transmission scheduled at", transmit.Format("15:04:05 UTC"))
+
+			waitUntil(transmit.Add(-1 * time.Minute))
 			startRadio()
 			readSensors()
 
-			// only transmit on even numbered minutes
-			now := time.Now()
-			minute := now.Minute()
-			nextEvenMinute := (minute + 2 - (minute % 2)) % 60
-			nextTime := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), nextEvenMinute, 0, 0, now.Location())
-
-			// If the next even minute is less than 1 minute away, skip to the following even minute
-			if nextTime.Sub(now) < time.Minute {
-				nextEvenMinute = (nextEvenMinute + 2) % 60
-				nextTime = time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), nextEvenMinute, 0, 0, now.Location())
-			}
-
-			sleepDuration := time.Until(nextTime)
-			if sleepDuration > 0 {
-				// round down to nearest second
-				sleepDuration -= time.Duration(sleepDuration.Nanoseconds() % 1_000_000_000)
-				println("Waiting until transmission window...")
-				watchAndWait(int(sleepDuration.Seconds()))
-			}
+			waitUntil(transmit)
 
 			Status = StatusTransmitting
 			transmitWSPRMessage()
@@ -103,8 +83,10 @@ func main() {
 			Status = StatusIdle
 			println("Transmission complete.")
 
-			// require new GPS fix for next transmission
+			// require new GPS fix/time for next transmission
 			gpsFixAcquired = false
+			gpsTimeAdjusted = false
+			waitUntil(nextScheduledTransmission().Add(-4 * time.Minute))
 		}
 	}
 }
