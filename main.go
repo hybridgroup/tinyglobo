@@ -96,7 +96,7 @@ func transmitWSPRMessage() {
 	updateWatchdog()
 
 	println("Transmitting WSPR message...")
-	location := wspr.Maidenhead(float64(currentFix.Latitude), float64(currentFix.Longitude))
+	location := wspr.Maidenhead(currentFix.Latitude, currentFix.Longitude)
 	println("Callsign:", callsign, "Location:", location, location[:4])
 	msg, err := wspr.NewMessage(callsign, location[:4], 37)
 	if err != nil {
