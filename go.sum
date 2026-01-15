@@ -1,3 +1,5 @@
+github.com/chewxy/math32 v1.11.1 h1:b7PGHlp8KjylDoU8RrcEsRuGZhJuz8haxnKfuMMRqy8=
+github.com/chewxy/math32 v1.11.1/go.mod h1:dOB2rcuFrCn6UHrze36WSLVPKtzPMRAQvBvUwkSsLqs=
 github.com/frankban/quicktest v1.10.2 h1:19ARM85nVi4xH7xPXuc5eM/udya5ieh7b/Sv+d844Tk=
 github.com/frankban/quicktest v1.10.2/go.mod h1:K+q6oSqb0W0Ininfk863uOk1lMy69l/P6txr3mVT54s=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
@@ -12,5 +14,7 @@ github.com/smartystreets/assertions v1.2.0 h1:42S6lae5dvLc7BrLu/0ugRtcFVjoJNMC/N
 github.com/smartystreets/assertions v1.2.0/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYlVhC/LOxJk7iOWnoo=
 github.com/tinygo-org/go-cayenne-lib v0.0.0-20230116181903-6c670c96018c h1:dT/cBU6zI10Hz/Euz4ymhKjyTen4XjVZJzzp3va84qM=
 github.com/tinygo-org/go-cayenne-lib v0.0.0-20230116181903-6c670c96018c/go.mod h1:HTTus7UIBhXKvLIeNGybbG1o7wr4zwwVbbUXwFqrtp0=
-tinygo.org/x/wireless v0.0.0-20260108104403-d628e11a764e h1:+N7sJ5NTSNCT2jeQwUpp2SOVisjQBH11lhIs1kfh98U=
-tinygo.org/x/wireless v0.0.0-20260108104403-d628e11a764e/go.mod h1:84WizJhp9qTxp2HOjfhc2/6GOKT5kLAinIvUc/aw43w=
+tinygo.org/x/drivers v0.34.1-0.20260114195543-0e2fb829efb1 h1:cNUDkcMD11rS3b/PeO0ZQF/UBj/+aO7EzwTbE2i+/Lc=
+tinygo.org/x/drivers v0.34.1-0.20260114195543-0e2fb829efb1/go.mod h1:ZdErNrApSABdVXjA1RejD67R8SNRI6RKVfYgQDZtKtk=
+tinygo.org/x/wireless v0.0.0-20260114195514-68d71b0af72b h1:VybdtFjYoxfiZxJ8pdJ6NlY7lAhpg+vuB52CoOyozSg=
+tinygo.org/x/wireless v0.0.0-20260114195514-68d71b0af72b/go.mod h1:rV/on2u7smpWIzhBMaWHqshjX8GDAruJGB+IVhbjkcI=
