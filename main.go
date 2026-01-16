@@ -3,8 +3,6 @@ package main
 import (
 	"machine"
 	"time"
-
-	"tinygo.org/x/wireless/wspr"
 )
 
 var (
@@ -63,17 +61,32 @@ func main() {
 			continue
 
 		case gpsFixAcquired:
+			// check if we are in a geofenced area
+			if geofenced() {
+				println("In geofenced area, delaying transmission.")
+				Status = StatusIdle
+				stopGPS()
+
+				gpsFixAcquired = false
+				gpsTimeAdjusted = false
+
+				// wait a half hour to see if we move out of geofenced area
+				watchAndWait(1800)
+				continue
+			}
+
 			println("Preparing to transmit...")
 			Status = StatusReadyToTransmit
 			stopGPS()
 
 			transmit := nextScheduledTransmission()
-			println("Next transmission scheduled at", transmit.Format("15:04:05 UTC"))
+			println("Waiting for warmup...")
 
 			waitUntil(transmit.Add(-1 * time.Minute))
 			startRadio()
 			readSensors()
 
+			println("Waiting for transmission window...")
 			waitUntil(transmit)
 
 			Status = StatusTransmitting
@@ -88,32 +101,6 @@ func main() {
 			gpsTimeAdjusted = false
 			waitUntil(nextScheduledTransmission().Add(-4 * time.Minute))
 		}
-	}
-}
-
-func transmitWSPRMessage() {
-	lastTransmission = time.Now()
-	updateWatchdog()
-
-	println("Transmitting WSPR message...")
-	location := wspr.Maidenhead(currentFix.Latitude, currentFix.Longitude)
-	println("Callsign:", callsign, "Location:", location, location[:4])
-	msg, err := wspr.NewMessage(callsign, location[:4], 37)
-	if err != nil {
-		println("Error creating WSPR message:", err.Error())
-		return
-	}
-
-	n, err := msg.WriteSymbols(data[:])
-	if err != nil {
-		println("error writing WSPR message")
-		return
-	}
-
-	println("Transmitting WSPR message with", n, "symbols")
-	if err := transmitter.WriteSymbols(data[:n]); err != nil {
-		println("error transmitting WSPR message:", err.Error())
-		return
 	}
 }
 
