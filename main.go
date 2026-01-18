@@ -7,11 +7,14 @@ import (
 var (
 	callsign string
 
-	data             [128 + 64]byte
-	lastTransmission time.Time
+	data [128 + 64]byte
+
 	currentLatitude  float32
 	currentLongitude float32
 	currentAltitude  int32
+	// battery voltage in millivolts
+	currentVoltage uint32
+	currentSpeed   uint32
 )
 
 func main() {
@@ -89,6 +92,11 @@ func main() {
 
 			Status = StatusTransmitting
 			transmitWSPRMessage()
+
+			// send the telemetry message 2 minutes after the WSPR message
+			waitUntil(transmit.Add(2 * time.Minute))
+			transmitTelemetryMessage()
+
 			stopRadio()
 
 			Status = StatusIdle

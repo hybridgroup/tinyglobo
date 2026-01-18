@@ -1,8 +1,7 @@
 package main
 
 import (
-	"time"
-
+	"tinygo.org/x/wireless/u4b"
 	"tinygo.org/x/wireless/wspr"
 )
 
@@ -10,7 +9,10 @@ const dialFreq = 14_095_600 // in Hz
 
 // 1, 2, 4, 5 using channel map that skips 3 to avoid interference.
 // TODO: set this from config or command line argument.
-var channelBand int = 1
+var (
+	channelCode string
+	channelBand int = 1
+)
 
 // Determine the frequency band to use for transmission.
 // band 3 is skipped to avoid interference.
@@ -43,7 +45,6 @@ func transmitFrequency(band int) uint64 {
 }
 
 func transmitWSPRMessage() {
-	lastTransmission = time.Now()
 	updateWatchdog()
 
 	println("Transmitting WSPR message...")
@@ -63,6 +64,29 @@ func transmitWSPRMessage() {
 
 	if err := transmitter.WriteSymbols(data[:n]); err != nil {
 		println("error transmitting WSPR message:", err.Error())
+		return
+	}
+}
+
+func transmitTelemetryMessage() {
+	updateWatchdog()
+
+	println("Transmitting telemetry message...")
+	location := wspr.Maidenhead(currentLatitude, currentLongitude)
+	msg, err := u4b.NewMessage(channelCode, location[:2], int(currentAltitude), int(temperature), int(currentVoltage), int(currentSpeed))
+	if err != nil {
+		println("Error creating telemetry message:", err.Error())
+		return
+	}
+
+	n, err := msg.WriteSymbols(data[:])
+	if err != nil {
+		println("error writing telemetry message")
+		return
+	}
+
+	if err := transmitter.WriteSymbols(data[:n]); err != nil {
+		println("error transmitting telemetry message:", err.Error())
 		return
 	}
 }

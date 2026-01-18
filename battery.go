@@ -8,9 +8,6 @@ import (
 
 var (
 	vsys = machine.ADC{machine.ADC3}
-
-	// battery voltage in millivolts
-	voltage uint32
 )
 
 func initBattery() {
@@ -21,7 +18,7 @@ func initBattery() {
 
 // calculate in millivolts
 func readBattery() uint32 {
-	voltage = uint32(vsys.Get()) * 10 * 323 * 3 / 65535
+	currentVoltage = uint32(vsys.Get()) * 10 * 323 * 3 / 65535
 
-	return voltage
+	return currentVoltage
 }
