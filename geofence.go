@@ -19,6 +19,9 @@ func geofenced() bool {
 	if pointInPolygon(currentLatitude, currentLongitude, yemen) {
 		return true
 	}
+	if pointInPolygon(currentLatitude, currentLongitude, ukraine) {
+		return true
+	}
 
 	return false
 }
@@ -65,6 +68,14 @@ var yemen = []float32{
 	43.4838867, 12.1360052,
 	53.8330078, 15.6653542,
 	52.1081543, 19.3111434,
+}
+
+var ukraine = []float32{
+	22.0855713, 52.3790840,
+	31.7858887, 52.1016774,
+	32.2290039, 44.3865891,
+	22.0904541, 44.3871696,
+	22.0855713, 52.3790840,
 }
 
 // pointInPolygon determines if a point (latitude, longitude) is inside a polygon

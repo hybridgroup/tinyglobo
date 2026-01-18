@@ -58,6 +58,20 @@ func TestPointInPolygon_Yemen(t *testing.T) {
 	}
 }
 
+func TestPointInPolygon_Ukraine(t *testing.T) {
+	// A point inside Ukraine polygon
+	lat, lon := float32(48.0), float32(30.0)
+	if !pointInPolygon(lat, lon, ukraine) {
+		t.Errorf("Expected point (%f, %f) to be inside Ukraine polygon", lat, lon)
+	}
+
+	// A point outside Ukraine polygon
+	lat, lon = float32(60.0), float32(30.0)
+	if pointInPolygon(lat, lon, ukraine) {
+		t.Errorf("Expected point (%f, %f) to be outside Ukraine polygon", lat, lon)
+	}
+}
+
 func TestGeofenced(t *testing.T) {
 	// Save and restore globals
 	oldLat, oldLon := currentLatitude, currentLongitude

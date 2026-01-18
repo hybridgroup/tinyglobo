@@ -5,8 +5,7 @@ import (
 )
 
 var (
-	callsign              string
-	transmissionFrequency = 10 * time.Minute
+	callsign string
 
 	data             [128 + 64]byte
 	lastTransmission time.Time
@@ -30,7 +29,7 @@ func main() {
 			break
 		}
 
-		// wait 15 seconds before checking again
+		// wait 30 seconds before checking again
 		watchAndWait(30)
 	}
 
@@ -39,7 +38,7 @@ func main() {
 	initSensors()
 
 	for {
-		// check if we have enough battery voltage to transmit
+		// TODO: check if we have enough battery voltage to transmit
 		readBattery()
 		// if voltage < desiredBatteryVoltage {
 		// 	Status = StatusIdle
@@ -98,12 +97,5 @@ func main() {
 			// require new GPS fix/time for next transmission
 			waitUntil(nextScheduledTransmission().Add(-4 * time.Minute))
 		}
-	}
-}
-
-func failure(err error) {
-	for {
-		println("FATAL:", err)
-		time.Sleep(time.Second)
 	}
 }
