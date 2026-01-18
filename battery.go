@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	minBatteryVoltage     = 2500 // millivolts
-	desiredBatteryVoltage = 3000 // millivolts
+	minBatteryVoltage             = 2500 // millivolts
+	desiredStartingBatteryVoltage = 3600 // millivolts
 )
 
 var (

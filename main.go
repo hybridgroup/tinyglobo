@@ -25,9 +25,12 @@ func main() {
 	initBattery()
 	for {
 		readBattery()
-		if voltage > desiredBatteryVoltage {
+		if voltage > desiredStartingBatteryVoltage {
 			break
 		}
+
+		// wait 15 seconds before checking again
+		watchAndWait(30)
 	}
 
 	machine.I2C0.Configure(machine.I2CConfig{})
