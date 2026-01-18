@@ -1,3 +1,5 @@
+//go:build tinygo
+
 package main
 
 import (
@@ -19,6 +21,8 @@ var (
 )
 
 func initRadio() error {
+	machine.I2C0.Configure(machine.I2CConfig{})
+
 	radioLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	radioLoadSwitch.High()
 	time.Sleep(100 * time.Millisecond)

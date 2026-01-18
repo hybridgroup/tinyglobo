@@ -1,3 +1,5 @@
+//go:build tinygo
+
 package main
 
 import (
@@ -26,6 +28,14 @@ var (
 	gpsFixAcquired  bool
 	gpsTimeAdjusted bool
 )
+
+func gpsIsStarted() bool {
+	return gpsStarted
+}
+
+func gpsHasFix() bool {
+	return gpsFixAcquired
+}
 
 // initialize GPS (called once at startup)
 func initGPS() {
@@ -92,7 +102,9 @@ func startGPS() {
 		if newfix.Valid {
 			currentFix = newfix
 			if newfix.Type == gps.GGA || newfix.Type == gps.RMC {
-				altitude = newfix.Altitude
+				currentLatitude = newfix.Latitude
+				currentLongitude = newfix.Longitude
+				currentAltitude = newfix.Altitude
 			}
 
 			// adjust time based on GPS time
@@ -116,6 +128,9 @@ func startGPS() {
 
 // stop GPS reading and power down GPS
 func stopGPS() {
+	gpsFixAcquired = false
+	gpsTimeAdjusted = false
+
 	updateWatchdog()
 	close(gpsStopChan)
 	time.Sleep(100 * time.Millisecond)

@@ -2,21 +2,21 @@ package main
 
 // geofenced checks if the current GPS fix is within any of the defined geofences
 func geofenced() bool {
-	if currentFix.Latitude == 0 && currentFix.Longitude == 0 {
+	if currentLatitude == 0 && currentLongitude == 0 {
 		return false
 	}
 
 	// check if inside any geofence
-	if pointInPolygon(currentFix.Latitude, currentFix.Longitude, latvia) {
+	if pointInPolygon(currentLatitude, currentLongitude, latvia) {
 		return true
 	}
-	if pointInPolygon(currentFix.Latitude, currentFix.Longitude, norKor) {
+	if pointInPolygon(currentLatitude, currentLongitude, norKor) {
 		return true
 	}
-	if pointInPolygon(currentFix.Latitude, currentFix.Longitude, uk) {
+	if pointInPolygon(currentLatitude, currentLongitude, uk) {
 		return true
 	}
-	if pointInPolygon(currentFix.Latitude, currentFix.Longitude, yemen) {
+	if pointInPolygon(currentLatitude, currentLongitude, yemen) {
 		return true
 	}
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"machine"
 	"time"
 )
 
@@ -11,6 +10,9 @@ var (
 
 	data             [128 + 64]byte
 	lastTransmission time.Time
+	currentLatitude  float32
+	currentLongitude float32
+	currentAltitude  int32
 )
 
 func main() {
@@ -21,19 +23,16 @@ func main() {
 
 	initWatchdog()
 
-	machine.InitADC()
 	initBattery()
 	for {
 		readBattery()
-		if voltage > desiredStartingBatteryVoltage {
+		if readBattery() > desiredStartingBatteryVoltage {
 			break
 		}
 
 		// wait 15 seconds before checking again
 		watchAndWait(30)
 	}
-
-	machine.I2C0.Configure(machine.I2CConfig{})
 
 	initGPS()
 	initRadio()
@@ -49,7 +48,7 @@ func main() {
 		// }
 
 		switch {
-		case !gpsStarted && !gpsFixAcquired:
+		case !gpsIsStarted() && !gpsHasFix():
 			println("Starting GPS...")
 			Status = StatusAcquiringFix
 			go startGPS()
@@ -57,21 +56,18 @@ func main() {
 			continue
 
 		// wait until we have a fix
-		case gpsStarted && !gpsFixAcquired:
+		case gpsIsStarted() && !gpsHasFix():
 			// TODO: add timeout and restart GPS if needed
 			println("Waiting for GPS fix...")
 			watchAndWait(1)
 			continue
 
-		case gpsFixAcquired:
+		case gpsHasFix():
 			// check if we are in a geofenced area
 			if geofenced() {
 				println("In geofenced area, delaying transmission.")
 				Status = StatusIdle
 				stopGPS()
-
-				gpsFixAcquired = false
-				gpsTimeAdjusted = false
 
 				// wait a half hour to see if we move out of geofenced area
 				watchAndWait(1800)
@@ -100,8 +96,6 @@ func main() {
 			println("Transmission complete.")
 
 			// require new GPS fix/time for next transmission
-			gpsFixAcquired = false
-			gpsTimeAdjusted = false
 			waitUntil(nextScheduledTransmission().Add(-4 * time.Minute))
 		}
 	}

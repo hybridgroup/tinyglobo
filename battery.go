@@ -1,12 +1,9 @@
+//go:build tinygo
+
 package main
 
 import (
 	"machine"
-)
-
-const (
-	minBatteryVoltage             = 2500 // millivolts
-	desiredStartingBatteryVoltage = 3600 // millivolts
 )
 
 var (
@@ -17,10 +14,14 @@ var (
 )
 
 func initBattery() {
+	machine.InitADC()
+
 	vsys.Configure(machine.ADCConfig{})
 }
 
-func readBattery() {
-	// calculate in millivolts
+// calculate in millivolts
+func readBattery() uint32 {
 	voltage = uint32(vsys.Get()) * 10 * 323 * 3 / 65535
+
+	return voltage
 }

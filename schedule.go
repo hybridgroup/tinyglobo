@@ -21,21 +21,19 @@ func waitUntil(when time.Time) {
 	}
 }
 
-func nextScheduledTransmission() time.Time {
-	now := time.Now().UTC()
-
+func nextScheduledTransmissionAt(now time.Time) time.Time {
 	currentMinute := now.Minute()
 	base := (currentMinute / 10) * 10
 	candidateMinute := base + transmissionOffset
 
-	// If candidate is in the past or less than 1 minute away, go to next interval
-	if candidateMinute <= currentMinute-1 {
+	hour := now.Hour()
+	day := now.Day()
+
+	// If candidate time is not in the future, move to next interval
+	if candidateMinute <= currentMinute {
 		base += 10
 		candidateMinute = base + transmissionOffset
 	}
-
-	hour := now.Hour()
-	day := now.Day()
 
 	// Handle hour rollover
 	if candidateMinute >= 60 {
@@ -48,4 +46,9 @@ func nextScheduledTransmission() time.Time {
 	}
 
 	return time.Date(now.Year(), now.Month(), day, hour, candidateMinute, 0, 0, time.UTC)
+}
+
+// Keep the original for production use
+func nextScheduledTransmission() time.Time {
+	return nextScheduledTransmissionAt(time.Now().UTC())
 }
