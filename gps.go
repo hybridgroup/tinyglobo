@@ -17,9 +17,9 @@ var (
 )
 
 var (
-	gpsReset          = machine.GPIO6
-	gpsLoadSwitch     = machine.GPIO2
-	gpsBatteryPowerOn = machine.GPIO3
+	gpsReset      = machine.GPIO6
+	gpsLoadSwitch = machine.GPIO2
+	//gpsBatteryPowerOn = machine.GPIO3
 )
 
 var (
@@ -48,8 +48,9 @@ func initGPS() {
 	gpsLoadSwitch.High()
 
 	// used to control GPS battery power. leave on for warm starts.
-	gpsBatteryPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	gpsBatteryPowerOn.High()
+	// we have this jumped from 3V3_OUT to GPS V_BCKP, so no need to control it here.
+	// gpsBatteryPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	// gpsBatteryPowerOn.High()
 }
 
 // start GPS reading goroutine
