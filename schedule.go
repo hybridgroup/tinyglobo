@@ -4,10 +4,6 @@ import (
 	"time"
 )
 
-var (
-	transmissionOffset = 2 // minutes past the 10-minute interval to start transmission.
-)
-
 func waitUntil(when time.Time) {
 	sleepDuration := time.Until(when)
 
@@ -24,7 +20,7 @@ func waitUntil(when time.Time) {
 func nextScheduledTransmissionAt(now time.Time) time.Time {
 	currentMinute := now.Minute()
 	base := (currentMinute / 10) * 10
-	candidateMinute := base + transmissionOffset
+	candidateMinute := base + transmissionOffset()
 
 	hour := now.Hour()
 	day := now.Day()
@@ -32,7 +28,7 @@ func nextScheduledTransmissionAt(now time.Time) time.Time {
 	// If candidate time is not in the future, move to next interval
 	if candidateMinute <= currentMinute {
 		base += 10
-		candidateMinute = base + transmissionOffset
+		candidateMinute = base + transmissionOffset()
 	}
 
 	// Handle hour rollover

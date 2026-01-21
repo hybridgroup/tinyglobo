@@ -45,7 +45,7 @@ func startRadio() error {
 	}
 
 	updateWatchdog()
-	dev.SetFrequency(si5351.Clock0, si5351.Frequency(transmitFrequency(channelBand)))
+	dev.SetFrequency(si5351.Clock0, si5351.Frequency(transmitFrequency(channelLane())))
 	dev.SetDriveStrength(si5351.Clock0, si5351.DriveStrength8MA)
 	dev.SetClockPower(si5351.Clock0, true)
 	dev.EnableOutput(si5351.Clock0, true)
@@ -68,7 +68,7 @@ func startRadio() error {
 
 	radio.device = dev
 
-	transmitter = fsk4.NewFSK4(&radio, transmitFrequency(channelBand), 146, 682*time.Millisecond)
+	transmitter = fsk4.NewFSK4(&radio, transmitFrequency(channelLane()), 146, 682*time.Millisecond)
 	transmitter.Configure()
 
 	radioStarted = true

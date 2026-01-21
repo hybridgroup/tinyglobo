@@ -5,9 +5,7 @@ import (
 )
 
 var (
-	callsign string
-
-	data [128 + 64]byte
+	data [256]byte
 
 	currentLatitude  float32
 	currentLongitude float32
