@@ -14,35 +14,37 @@ Responsible for handling the balloons. Do not let go until the crew agrees "Go F
 
 Responsible for handling the antennas.
 
-### CONTROL
+### PAYLOAD
 
-Responsible for handling the payload module.
+Responsible for handling the payload.
 
 ## Liftoff Procedure
 
-### Prepare payload module
+### Prepare payload
 
-- [ ] CONTROL: place payload module in direct sunlight to charge solar system.
+- [ ] PAYLOAD: place payload in direct sunlight to charge solar system.
 
-- [ ] CONTROL: wait until LED starts blinking 1 - idle.
+- [ ] PAYLOAD: wait until LED starts blinking 1 - idle.
 
-- [ ] CONTROL: wait until LED starts blinking 2 - waiting for GPS fix.
+- [ ] PAYLOAD: wait until LED starts blinking 2 - waiting for GPS fix.
 
-- [ ] CONTROL: wait until LED starts blinking 3 - waiting for transmission.
+- [ ] PAYLOAD: wait until LED starts blinking 3 - waiting for transmission.
 
 ### Connect balloon cluster
 
 - [ ] BOOST: ensure safety weight is attached to balloon cluster.
 
-- [ ] CONTROL: tie wrap tether from payload module to balloon cluster.
+- [ ] PAYLOAD: tie wrap tether from payload to balloon cluster.
 
-- [ ] BOOST: walk balloon cluster 4-5 meters away from payload module (approx.length of tether)
+- [ ] BOOST: walk balloon cluster 4-5 meters away from payload (approx.length of tether)
 
-- [ ] COMMS: unreel top antenna spool while walking towards balloon cluster
+### Extend antennas
 
-- [ ] COMMS: attach top antenna to balloon cluster
+- [ ] COMMS: unreel top antenna spool while walking towards balloon cluster.
 
-- [ ] COMMS: unreel bottom antenna spool while walking away from payload module
+- [ ] COMMS: attach top antenna to balloon cluster using krylon tape.
+
+- [ ] COMMS: unreel bottom antenna spool while walking away from payload.
 
 ### Final Release
 
@@ -54,10 +56,10 @@ Responsible for handling the payload module.
 
 - [ ] BOOST: confirm ready for release
 
-- [ ] CONTROL: final countdown
+- [ ] PAYLOAD: final countdown
 
 - [ ] BOOST: release balloon cluster
 
-- [ ] CONTROL: ensure payload module liftoff
+- [ ] PAYLOAD: ensure payload liftoff
 
 - [ ] COMMS: ensure bottom antenna liftoff
