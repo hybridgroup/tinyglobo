@@ -6,7 +6,7 @@ require tinygo.org/x/drivers v0.34.1-0.20260114195543-0e2fb829efb1
 
 require (
 	github.com/TheThingsNetwork/go-cayenne-lib v1.1.0
-	tinygo.org/x/wireless v0.0.0-20260114195514-68d71b0af72b
+	tinygo.org/x/wireless v0.0.0-20260121153201-f0d8647de68c
 )
 
 require (
