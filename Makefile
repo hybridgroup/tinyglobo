@@ -6,3 +6,6 @@ build:
 
 verify-gps:
 	@tinygo flash -size short -target pico2 -monitor ./verify/gps
+
+verify-powman:
+	@tinygo flash -size short -target pico2 -monitor ./verify/powman
