@@ -1,8 +1,14 @@
 package main
 
 import (
+	"machine"
 	"time"
+
+	"github.com/hybridgroup/tinyglobo/powman"
 )
+
+// duration to sleep in deep sleep mode while waiting for battery to charge (milliseconds)
+const deepSleepDuration = 30_000
 
 var (
 	data [256]byte
@@ -16,24 +22,31 @@ var (
 )
 
 func main() {
+	powman.Init(0)
+	machine.InitSerial()
+
 	time.Sleep(3 * time.Second)
 	println("*** TinyGlobo 3 starting... ***")
+
+	for {
+		initBattery()
+		val := readBattery()
+		println("Battery voltage:", val, "mV")
+		if val > desiredStartingBatteryVoltage {
+			break
+		}
+
+		machine.LED.Low()
+		powman.PinIsolate(uint8(machine.LED))
+		if err := powman.SleepForMs(deepSleepDuration); err != nil {
+			println("Error entering deep sleep:", err.Error())
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 
 	startNotification(5 * time.Second)
 
 	initWatchdog()
-
-	initBattery()
-	for {
-		readBattery()
-		if readBattery() > desiredStartingBatteryVoltage {
-			break
-		}
-
-		// wait 30 seconds before checking again
-		watchAndWait(30)
-	}
-
 	initGPS()
 	initRadio()
 	initSensors()
@@ -90,6 +103,9 @@ func main() {
 
 			Status = StatusTransmitting
 			transmitWSPRMessage()
+
+			readBattery()
+			println("Battery voltage after WSPR:", currentVoltage, "mV")
 
 			// send the telemetry message 2 minutes after the WSPR message
 			waitUntil(transmit.Add(2 * time.Minute))
