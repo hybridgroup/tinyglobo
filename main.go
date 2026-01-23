@@ -7,9 +7,6 @@ import (
 	"github.com/hybridgroup/tinyglobo/powman"
 )
 
-// duration to sleep in deep sleep mode while waiting for battery to charge (milliseconds)
-const deepSleepDuration = 30_000
-
 var (
 	data [256]byte
 
@@ -30,18 +27,20 @@ func main() {
 
 	for {
 		initBattery()
-		val := readBattery()
-		println("Battery voltage:", val, "mV")
-		if val > desiredStartingBatteryVoltage {
+		time.Sleep(10 * time.Millisecond)
+
+		readBattery()
+		println("Battery voltage:", currentVoltage, "mV")
+		if currentVoltage > desiredStartingBatteryVoltage {
 			break
 		}
 
-		machine.LED.Low()
-		powman.PinIsolate(uint8(machine.LED))
-		if err := powman.SleepForMs(deepSleepDuration); err != nil {
-			println("Error entering deep sleep:", err.Error())
-		}
-		time.Sleep(10 * time.Millisecond)
+		println("Battery voltage below desired starting voltage, entering deep sleep...")
+		notify(int(StatusIdle))
+		time.Sleep(500 * time.Millisecond)
+		notify((int(currentVoltage) / 1000) - 1)
+
+		deepSleepForMs(deepSleepDuration)
 	}
 
 	startNotification(5 * time.Second)
@@ -52,14 +51,6 @@ func main() {
 	initSensors()
 
 	for {
-		// TODO: check if we have enough battery voltage to transmit
-		readBattery()
-		// if voltage < desiredBatteryVoltage {
-		// 	Status = StatusIdle
-		// 	watchAndWait(15)
-		// 	continue
-		// }
-
 		switch {
 		case !gpsIsStarted() && !gpsHasFix():
 			println("Starting GPS...")
@@ -76,6 +67,22 @@ func main() {
 			continue
 
 		case gpsHasFix():
+			// do we still have enough battery to transmit?
+			// if not go into deep sleep, the GPS warm start will use less power
+			// to obtain a fix next time.
+			readBattery()
+			if currentVoltage < minTransmitVoltage {
+				println("Battery voltage too low for transmission:", currentVoltage, "mV")
+				Status = StatusIdle
+				stopGPS()
+
+				notify(int(StatusIdle))
+				time.Sleep(500 * time.Millisecond)
+				notify((int(currentVoltage) / 1000) - 1)
+
+				deepSleepForMs(deepSleepDuration)
+			}
+
 			// check if we are in a geofenced area
 			if geofenced() {
 				println("In geofenced area, delaying transmission.")
@@ -116,8 +123,19 @@ func main() {
 			Status = StatusIdle
 			println("Transmission complete.")
 
-			// require new GPS fix/time for next transmission
-			waitUntil(nextScheduledTransmission().Add(-4 * time.Minute))
+			// require new GPS fix/time for next transmission, so deep sleep
+			// until 4 minutes before the next scheduled transmission
+			next := nextScheduledTransmission().Add(-4 * time.Minute)
+			deepSleepForMs(uint32(time.Now().Sub(next).Milliseconds()))
 		}
 	}
+}
+
+func deepSleepForMs(ms uint32) {
+	machine.LED.Low()
+	powman.PinIsolate(uint8(machine.LED))
+	if err := powman.SleepForMs(uint64(ms)); err != nil {
+		println("Error entering deep sleep:", err.Error())
+	}
+	time.Sleep(10 * time.Millisecond)
 }

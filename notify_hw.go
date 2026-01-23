@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-func notify(count int) {
+func notify(status int) {
 	led := machine.LED
 	led.Configure(machine.PinConfig{Mode: machine.PinOutput})
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < status+1; i++ {
 		led.High()
 		time.Sleep(250 * time.Millisecond)
 		led.Low()

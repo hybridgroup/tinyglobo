@@ -19,7 +19,7 @@ var Status StatusType = StatusIdle
 func startNotification(frequency time.Duration) {
 	go func() {
 		for {
-			notify(int(Status) + 1)
+			notify(int(Status))
 			time.Sleep(frequency)
 		}
 	}()

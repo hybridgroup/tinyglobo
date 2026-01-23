@@ -2,5 +2,5 @@
 
 package main
 
-func notify(count int) {
+func notify(status int) {
 }

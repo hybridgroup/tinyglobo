@@ -1,9 +1,12 @@
 package main
 
 const (
-	minBatteryVoltage             = 2500 // millivolts
+	minTransmitVoltage            = 3100 // millivolts
 	desiredStartingBatteryVoltage = 3600 // millivolts
 )
+
+// duration to sleep in deep sleep mode while waiting for battery to charge (milliseconds)
+const deepSleepDuration = 60_000
 
 // Things we have to set up via -ldflags:
 var (
