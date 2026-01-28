@@ -8,11 +8,29 @@ You will need 4 - 36 inch transparent balloons. Cheap ones are fine, as long as 
 
 Use 2 big clips to hold them shut while filling to needed buoyancy.
 
+## Stretching
+
+The balloons need to be stretched by being completely filled approximately 24 hours before flight.
+
+During assembly of the balloon cluster, some helium will be released from each balloon in order to achieve the target lift per balloon.
+
+This will leave room for the helium to expand within each balloon during ascent without the balloon bursting.
+
 ## Calculate lift
 
-Full payload of the TinyGlobo / 4 + 3g == Target lift per balloon
+Full payload weight of the TinyGlobo + 7 grams "free lift" is the total net lift needed.
 
-Clip weight minus (target lift per balloon / 4) == the weight to be shown on scale when filling balloons.
+Total net lift divided by 4 == net lift per balloon
+
+Clip weight minus net lift per balloon == the weight to be shown on scale per balloon when filling with helium.
+
+## Calibrate balloons
+
+Now carefully release some helium from each balloon in order to achieve the net lift. Do not release too much at once or you run the risk of underfilling.
+
+If the balloons are too full, they risk bursting when they reach higher altitudes.
+
+If the balloons are not full enough, they might not provide enough lift to reach the higher altitudes needed.
 
 ## Connecting balloons
 
