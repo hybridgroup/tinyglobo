@@ -44,3 +44,21 @@ func stopNotifications() {
 		notifyStopChan = nil
 	}
 }
+
+func notifyLowBattery() {
+	stopNotifications()
+	notify(int(StatusLowBattery))
+	time.Sleep(500 * time.Millisecond)
+	notify((int(currentVoltage) / 1000) - 1)
+	time.Sleep(500 * time.Millisecond)
+}
+
+func notifyError(status StatusType) {
+	stopNotifications()
+	notify(int(status))
+	time.Sleep(500 * time.Millisecond)
+	notify(int(status))
+	time.Sleep(500 * time.Millisecond)
+	notify(int(status))
+	time.Sleep(500 * time.Millisecond)
+}

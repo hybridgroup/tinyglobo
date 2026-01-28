@@ -28,9 +28,7 @@ func main() {
 		}
 
 		log("Battery voltage below desired starting voltage, entering deep sleep...")
-		notify(int(StatusLowBattery))
-		time.Sleep(500 * time.Millisecond)
-		notify((int(currentVoltage) / 1000) - 1)
+		notifyLowBattery()
 
 		deepSleepForMs(deepSleepDuration)
 	}
@@ -58,10 +56,7 @@ func main() {
 				log("Battery voltage critical:", currentVoltage, "mV")
 				stopGPS()
 
-				stopNotifications()
-				notify(int(StatusLowBattery))
-				time.Sleep(500 * time.Millisecond)
-				notify((int(currentVoltage) / 1000) - 1)
+				notifyLowBattery()
 
 				deepSleepForMs(deepSleepDuration)
 			}
@@ -76,10 +71,7 @@ func main() {
 				Status = StatusGeofenceBreach
 				stopGPS()
 
-				stopNotifications()
-				notify(int(StatusGeofenceBreach))
-				time.Sleep(500 * time.Millisecond)
-				notify(int(StatusGeofenceBreach))
+				notifyError(StatusGeofenceBreach)
 
 				// wait a half hour to see if we move out of geofenced area
 				deepSleepForMs(30 * 60 * 1000)
@@ -94,10 +86,7 @@ func main() {
 				Status = StatusIdle
 				stopGPS()
 
-				stopNotifications()
-				notify(int(StatusLowBattery))
-				time.Sleep(500 * time.Millisecond)
-				notify((int(currentVoltage) / 1000) - 1)
+				notifyLowBattery()
 
 				deepSleepForMs(deepSleepDuration)
 			}
@@ -114,11 +103,7 @@ func main() {
 				ms := next.Sub(now).Milliseconds()
 				if ms > 1000 {
 					log("Too soon before transmission, deep sleep for", ms, "ms")
-
-					stopNotifications()
-					notify(int(StatusTooSoonToTransmit))
-					time.Sleep(500 * time.Millisecond)
-					notify(int(StatusTooSoonToTransmit))
+					notifyError(StatusTooSoonToTransmit)
 
 					deepSleepForMs(uint32(ms - 1000))
 				}
