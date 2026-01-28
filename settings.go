@@ -3,6 +3,7 @@ package main
 const (
 	minTransmitVoltage            = 3100 // millivolts
 	desiredStartingBatteryVoltage = 3600 // millivolts
+	criticalLowVoltage            = 2800 // millivolts
 )
 
 // duration to sleep in deep sleep mode while waiting for battery to charge (milliseconds)

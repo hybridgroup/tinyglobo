@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-func TestNextScheduledTransmissionAt(t *testing.T) {
+func TestNextScheduledTransmissionFrom(t *testing.T) {
 	// set the offset for testing
 	offset = "2"
 
 	getNext := func(year int, month time.Month, day, hour, min, sec int) time.Time {
 		now := time.Date(year, month, day, hour, min, sec, 0, time.UTC)
-		return nextScheduledTransmissionAt(now)
+		return nextScheduledTransmissionFrom(now)
 	}
 
 	// Test: 12:01 should schedule for 12:02

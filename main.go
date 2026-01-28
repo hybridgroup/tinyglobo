@@ -1,21 +1,13 @@
+//go:build tinygo
+
 package main
 
 import (
 	"machine"
+	"math"
 	"time"
 
 	"github.com/hybridgroup/tinyglobo/powman"
-)
-
-var (
-	data [256]byte
-
-	currentLatitude  float32
-	currentLongitude float32
-	currentAltitude  int32
-	// battery voltage in millivolts
-	currentVoltage uint32
-	currentSpeed   uint32
 )
 
 func main() {
@@ -23,119 +15,173 @@ func main() {
 	machine.InitSerial()
 
 	time.Sleep(3 * time.Second)
-	println("*** TinyGlobo 3 starting... ***")
+	log("*** TinyGlobo 3 starting... ***")
 
 	for {
 		initBattery()
 		time.Sleep(10 * time.Millisecond)
 
 		readBattery()
-		println("Battery voltage:", currentVoltage, "mV")
+		log("Battery voltage:", currentVoltage, "mV")
 		if currentVoltage > desiredStartingBatteryVoltage {
 			break
 		}
 
-		println("Battery voltage below desired starting voltage, entering deep sleep...")
-		notify(int(StatusIdle))
+		log("Battery voltage below desired starting voltage, entering deep sleep...")
+		notify(int(StatusLowBattery))
 		time.Sleep(500 * time.Millisecond)
 		notify((int(currentVoltage) / 1000) - 1)
 
 		deepSleepForMs(deepSleepDuration)
 	}
 
-	startNotification(5 * time.Second)
+	//loadStateFromScratch()
+	startNotifications(5 * time.Second)
 
 	initWatchdog()
-	initGPS()
-	initRadio()
 	initSensors()
 
 	for {
 		switch {
 		case !gpsIsStarted() && !gpsHasFix():
-			println("Starting GPS...")
+			log("Starting GPS...")
 			Status = StatusAcquiringFix
+			initGPS()
 			go startGPS()
 			watchAndWait(5)
 			continue
 
 		// wait until we have a fix
-		case gpsIsStarted() && !gpsHasFix():
-			// TODO: add timeout and restart GPS if needed
-			println("Waiting for GPS fix...")
-			watchAndWait(1)
-			continue
-
-		case gpsHasFix():
-			// do we still have enough battery to transmit?
-			// if not go into deep sleep, the GPS warm start will use less power
-			// to obtain a fix next time.
+		case gpsIsStarted() && !gpsTimeAdjusted():
 			readBattery()
-			if currentVoltage < minTransmitVoltage {
-				println("Battery voltage too low for transmission:", currentVoltage, "mV")
-				Status = StatusIdle
+			if currentVoltage < criticalLowVoltage {
+				log("Battery voltage critical:", currentVoltage, "mV")
 				stopGPS()
 
-				notify(int(StatusIdle))
+				stopNotifications()
+				notify(int(StatusLowBattery))
 				time.Sleep(500 * time.Millisecond)
 				notify((int(currentVoltage) / 1000) - 1)
 
 				deepSleepForMs(deepSleepDuration)
 			}
 
+			watchAndWait(1)
+			continue
+
+		case gpsTimeAdjusted():
 			// check if we are in a geofenced area
 			if geofenced() {
-				println("In geofenced area, delaying transmission.")
+				log("In geofenced area, delaying transmission.")
+				Status = StatusGeofenceBreach
+				stopGPS()
+
+				stopNotifications()
+				notify(int(StatusGeofenceBreach))
+				time.Sleep(500 * time.Millisecond)
+				notify(int(StatusGeofenceBreach))
+
+				// wait a half hour to see if we move out of geofenced area
+				deepSleepForMs(30 * 60 * 1000)
+			}
+
+			// do we have enough battery to transmit?
+			// if not go into deep sleep, the GPS warm start will use less power
+			// to obtain a fix next time.
+			readBattery()
+			if currentVoltage < minTransmitVoltage {
+				log("Battery voltage too low for transmission:", currentVoltage, "mV")
 				Status = StatusIdle
 				stopGPS()
 
-				// wait a half hour to see if we move out of geofenced area
-				watchAndWait(1800)
-				continue
+				stopNotifications()
+				notify(int(StatusLowBattery))
+				time.Sleep(500 * time.Millisecond)
+				notify((int(currentVoltage) / 1000) - 1)
+
+				deepSleepForMs(deepSleepDuration)
 			}
 
-			println("Preparing to transmit...")
+			log("Preparing to transmit...")
 			Status = StatusReadyToTransmit
 			stopGPS()
 
-			transmit := nextScheduledTransmission()
-			println("Waiting for warmup...")
+			now := time.Now()
+			transmit := nextScheduledTransmissionFrom(now)
+			if transmit.Sub(now) > 120*time.Second {
+				// too early, go back to sleep until 120 seconds before next transmission
+				next := transmit.Add(-120 * time.Second)
+				ms := next.Sub(now).Milliseconds()
+				if ms > 1000 {
+					log("Too soon before transmission, deep sleep for", ms, "ms")
 
-			waitUntil(transmit.Add(-1 * time.Minute))
+					stopNotifications()
+					notify(int(StatusTooSoonToTransmit))
+					time.Sleep(500 * time.Millisecond)
+					notify(int(StatusTooSoonToTransmit))
+
+					deepSleepForMs(uint32(ms - 1000))
+				}
+			}
+
+			log("Waiting for warmup...")
+			waitUntil(transmit.Add(-30 * time.Second))
+			initRadio()
 			startRadio()
 			readSensors()
 
-			println("Waiting for transmission window...")
+			log("Waiting for transmission window...")
 			waitUntil(transmit)
 
 			Status = StatusTransmitting
 			transmitWSPRMessage()
 
 			readBattery()
-			println("Battery voltage after WSPR:", currentVoltage, "mV")
+			log("Battery voltage after WSPR:", currentVoltage, "mV")
 
 			// send the telemetry message 2 minutes after the WSPR message
-			waitUntil(transmit.Add(2 * time.Minute))
+			waitUntil(transmit.Add(120 * time.Second))
 			transmitTelemetryMessage()
 
 			stopRadio()
 
 			Status = StatusIdle
-			println("Transmission complete.")
+			log("Transmission complete.")
 
 			// require new GPS fix/time for next transmission, so deep sleep
-			// until 4 minutes before the next scheduled transmission
-			next := nextScheduledTransmission().Add(-4 * time.Minute)
-			deepSleepForMs(uint32(time.Now().Sub(next).Milliseconds()))
+			// until 3 minutes before the next scheduled transmission
+			now = time.Now()
+			next := nextScheduledTransmissionFrom(now).Add(-3 * time.Minute)
+			ms := next.Sub(now).Milliseconds()
+			if ms > 0 {
+				deepSleepForMs(uint32(ms))
+			}
 		}
 	}
 }
 
 func deepSleepForMs(ms uint32) {
+	// save gps info into scratch registers
+	// saveStateToScratch()
+
 	machine.LED.Low()
 	powman.PinIsolate(uint8(machine.LED))
-	if err := powman.SleepForMs(uint64(ms)); err != nil {
-		println("Error entering deep sleep:", err.Error())
-	}
+	powman.SleepForMs(uint64(ms))
 	time.Sleep(10 * time.Millisecond)
+}
+
+func saveStateToScratch() {
+	powman.Scratch(0).Set(uint32(Status))
+	powman.Scratch(1).Set(math.Float32bits(currentLatitude))
+	powman.Scratch(2).Set(math.Float32bits(currentLongitude))
+	powman.Scratch(3).Set(uint32(currentAltitude))
+	powman.Scratch(4).Set(uint32(currentSpeed))
+}
+
+func loadStateFromScratch() {
+	Status = StatusType(powman.Scratch(0).Get())
+	currentLatitude = math.Float32frombits(powman.Scratch(1).Get())
+	currentLongitude = math.Float32frombits(powman.Scratch(2).Get())
+	currentAltitude = int32(powman.Scratch(3).Get())
+	currentSpeed = uint32(powman.Scratch(4).Get())
 }

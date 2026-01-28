@@ -40,23 +40,23 @@ func transmitFrequency(band int) uint64 {
 func transmitWSPRMessage() {
 	updateWatchdog()
 
-	println("Transmitting WSPR message...")
+	log("Transmitting WSPR message...")
 	location := wspr.Maidenhead(currentLatitude, currentLongitude)
-	println("Callsign:", callsign, "Location:", location, location[:4])
+	log("Callsign:", callsign, "Location:", location, location[:4])
 	msg, err := wspr.NewMessage(callsign, location[:4], 37)
 	if err != nil {
-		println("Error creating WSPR message:", err.Error())
+		log("Error creating WSPR message:", err.Error())
 		return
 	}
 
 	n, err := msg.WriteSymbols(data[:])
 	if err != nil {
-		println("error writing WSPR message")
+		log("error writing WSPR message")
 		return
 	}
 
 	if err := transmitter.WriteSymbols(data[:n]); err != nil {
-		println("error transmitting WSPR message:", err.Error())
+		log("error transmitting WSPR message:", err.Error())
 		return
 	}
 }
@@ -64,22 +64,22 @@ func transmitWSPRMessage() {
 func transmitTelemetryMessage() {
 	updateWatchdog()
 
-	println("Transmitting telemetry message...")
+	log("Transmitting telemetry message...")
 	location := wspr.Maidenhead(currentLatitude, currentLongitude)
 	msg, err := u4b.NewMessage(channelCode(), location[:2], int(currentAltitude), int(temperature), int(currentVoltage), int(currentSpeed))
 	if err != nil {
-		println("Error creating telemetry message:", err.Error())
+		log("Error creating telemetry message:", err.Error())
 		return
 	}
 
 	n, err := msg.WriteSymbols(data[:])
 	if err != nil {
-		println("error writing telemetry message")
+		log("error writing telemetry message")
 		return
 	}
 
 	if err := transmitter.WriteSymbols(data[:n]); err != nil {
-		println("error transmitting telemetry message:", err.Error())
+		log("error transmitting telemetry message:", err.Error())
 		return
 	}
 }

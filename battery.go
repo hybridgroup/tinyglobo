@@ -18,7 +18,17 @@ func initBattery() {
 
 // calculate in millivolts
 func readBattery() uint32 {
-	currentVoltage = uint32(vsys.Get()) * 10 * 323 * 3 / 65535
+	var voltage uint16
+	// for i := 0; i < 10; i++ {
+	// 	v := vsys.Get()
+	// 	if v > voltage {
+	// 		voltage = v
+	// 	}
+	// 	time.Sleep(5 * time.Millisecond)
+	// }
+
+	voltage = vsys.Get()
+	currentVoltage = uint32(voltage) * 10 * 323 * 3 / 65535
 
 	return currentVoltage
 }

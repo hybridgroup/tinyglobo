@@ -4,6 +4,7 @@ package main
 
 import (
 	"machine"
+	"sync"
 
 	"runtime"
 	"time"
@@ -19,14 +20,15 @@ var (
 var (
 	gpsReset      = machine.GPIO6
 	gpsLoadSwitch = machine.GPIO2
-	//gpsBatteryPowerOn = machine.GPIO3
 )
 
 var (
-	gpsStarted      bool
-	gpsStopChan     chan struct{}
-	gpsFixAcquired  bool
-	gpsTimeAdjusted bool
+	gpsStarted     bool
+	gpsStopChan    chan struct{}
+	gpsFixAcquired bool
+
+	mu            sync.Mutex
+	gpsTimeAdjust bool
 )
 
 func gpsIsStarted() bool {
@@ -35,6 +37,13 @@ func gpsIsStarted() bool {
 
 func gpsHasFix() bool {
 	return gpsFixAcquired
+}
+
+func gpsTimeAdjusted() bool {
+	mu.Lock()
+	defer mu.Unlock()
+
+	return gpsTimeAdjust
 }
 
 // initialize GPS (called once at startup)
@@ -46,11 +55,6 @@ func initGPS() {
 	// used to control GPS power. high means off. can turn off when not in use.
 	gpsLoadSwitch.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	gpsLoadSwitch.High()
-
-	// used to control GPS battery power. leave on for warm starts.
-	// we have this jumped from 3V3_OUT to GPS V_BCKP, so no need to control it here.
-	// gpsBatteryPowerOn.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	// gpsBatteryPowerOn.High()
 }
 
 // start GPS reading goroutine
@@ -85,7 +89,7 @@ func startGPS() {
 			case gps.ErrUnknownNMEASentence, gps.ErrInvalidNMEASentence, gps.ErrInvalidNMEASentenceLength:
 				continue
 			default:
-				println("sentence error:", err)
+				log("sentence error:", err)
 				continue
 			}
 		}
@@ -96,7 +100,7 @@ func startGPS() {
 			case gps.ErrUnknownNMEASentence, gps.ErrInvalidNMEASentence, gps.ErrInvalidNMEASentenceLength:
 				continue
 			default:
-				println("parse error:", err)
+				log("parse error:", err)
 				continue
 			}
 		}
@@ -108,29 +112,24 @@ func startGPS() {
 				currentAltitude = newfix.Altitude
 			}
 
-			// adjust time based on GPS time
-			if !gpsTimeAdjusted {
-				now := time.Now()
-				println("Adjusting system time based on GPS fix from", now.Format("15:04:05"), "to", newfix.Time.Format("15:04:05"))
-				runtime.AdjustTimeOffset(int64(newfix.Time.Sub(now)))
-				gpsTimeAdjusted = true
-			}
+			// adjust time based on GPS time?
+			adjustTimeFromGPS(newfix)
+
 			gpsFixAcquired = true
 		}
 		if !gpsFixAcquired {
 			if newfix.Type == gps.GSV {
-				println("Satellites in view:", newfix.Satellites)
+				log("Satellites in view:", newfix.Satellites)
 			}
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
 // stop GPS reading and power down GPS
 func stopGPS() {
 	gpsFixAcquired = false
-	gpsTimeAdjusted = false
 
 	updateWatchdog()
 	close(gpsStopChan)
@@ -146,4 +145,17 @@ func stopGPS() {
 	gpsLoadSwitch.High()
 
 	gpsStarted = false
+}
+
+func adjustTimeFromGPS(fix gps.Fix) {
+	if !gpsTimeAdjust {
+		mu.Lock()
+		defer mu.Unlock()
+
+		now := time.Now()
+		runtime.AdjustTimeOffset(int64(fix.Time.Sub(now)))
+		log("Adjusting system time based on GPS fix from", now.Format("15:04:05"), "to", fix.Time.Format("15:04:05"))
+
+		gpsTimeAdjust = true
+	}
 }

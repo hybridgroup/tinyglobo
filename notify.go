@@ -11,16 +11,36 @@ const (
 	StatusAcquiringFix
 	StatusReadyToTransmit
 	StatusTransmitting
+	StatusLowBattery
+	StatusGeofenceBreach
+	StatusTooSoonToTransmit
 	StatusError
 )
 
 var Status StatusType = StatusIdle
 
-func startNotification(frequency time.Duration) {
+var notifyStopChan chan struct{}
+
+func startNotifications(frequency time.Duration) {
+	notifyStopChan = make(chan struct{})
+
 	go func() {
 		for {
+			select {
+			case <-notifyStopChan:
+				return
+			default:
+			}
+
 			notify(int(Status))
 			time.Sleep(frequency)
 		}
 	}()
+}
+
+func stopNotifications() {
+	if notifyStopChan != nil {
+		close(notifyStopChan)
+		notifyStopChan = nil
+	}
 }
